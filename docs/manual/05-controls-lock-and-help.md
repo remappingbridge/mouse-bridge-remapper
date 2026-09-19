@@ -1,79 +1,71 @@
 # Controls, lock and help
 
+Status: **FROZEN BY MBR-00**.
+
 Mouse Bridge Remapper uses the Waveshare Pico-LCD-1.3 HAT joystick and keys as its local control surface.
 
 ## Release-triggered actions
 
-Navigation, Apply, Cancel, Retry, Remove, Lock and access actions execute on **release**, not on the initial physical press.
+Navigation, Apply, Cancel, Retry, Remove, Lock and access actions execute on **release**, not on initial press.
 
-Where the screen exposes pressed-state feedback, pressing a visible control makes that label white while held. Releasing restores its semantic resting color and then performs the action.
+Where a visible control supports press feedback, its label becomes white while held and returns to its resting semantic color on release before the action is processed.
 
-This rule prevents accidental double execution and is inherited from the physically accepted BLU2USB interaction behavior.
+## Option lists
 
-## Joystick
+Where declared by the screen reference:
 
-Where an option list is present:
+- `JOY UP` selects previous;
+- `JOY DOWN` selects next;
+- selection wraps;
+- `JOY PRESS` accesses selected option.
 
-- `JOY UP` selects the previous option;
-- `JOY DOWN` selects the next option;
-- selection wraps when the screen contract declares list navigation;
-- `JOY PRESS` accesses the selected option.
+Saved Devices uses `JOY RIGHT\LEFT: PAGE` with page wrap.
 
-Saved Devices uses `JOY RIGHT\LEFT: PAGE` to move through mouse pages.
+## Back and HOME
 
-Some profile pages use `JOY LEFT` as Back. The Escape-active page currently declares `JOY LEFT: GO TO HOME`; that literal exception remains part of the current screen specification until the product vocabulary/navigation contract is explicitly normalized.
+Key B normally means the exact Back/Cancel transition frozen for the current screen.
 
-## Key B
+`JOY LEFT: GO TO HOME` on `escape-active` is an intentional exception introduced by the newer screen contract. It invokes the unified HOME resolver directly rather than one-level Back.
 
-Most screens use Key B as Back or Cancel. Cancel means leaving the pending operation without committing it.
+No other screen gains a hidden Go-To-Home shortcut by analogy.
 
-The implementation must use the canonical screen transition table rather than infer behavior from the English word alone.
+## Help
 
-## Key X and Help
+Key X opens contextual Help only on screens that explicitly advertise it.
 
-Contextual Help is generally entered using Key X on screens that advertise it.
+A Help page owns every HAT input while visible. `ANY KEY: BACK` consumes the interaction and returns to its owning screen. It cannot simultaneously perform the control's normal underlying action.
 
-A Help page owns the interaction while visible. Its footer is:
+The literal Pair New Help screens are frozen in `06-screen-reference.md`.
 
-```text
-ANY KEY: BACK
-```
+## Ordinary Lock
 
-Any HAT control returns from Help instead of performing its normal underlying action.
+Only screens that explicitly display `KEY Y: LOCK` have the ordinary Key-Y lock command. There are **no hidden lock controls** on pages where Lock is omitted.
 
-## Key Y and Lock
+Ordinary Lock affects presentation only. Bluetooth, the current Mouse, Pair New/search transactions, remapping and USB output continue.
 
-Screens that explicitly expose `KEY Y: LOCK` may lock the display on Key Y release.
+The first complete HAT interaction while ordinarily locked unlocks the display and is consumed; it must not also activate a screen action.
 
-Lock is a presentation feature only:
+## Instructional First Connected / Learn controls
 
-- Bluetooth stays active;
-- all connected mice continue forwarding input;
-- remapping remains active;
-- reconnect/session bookkeeping continues;
-- USB output remains active.
+`first-mouse-connected` and `learn-the-keys` deliberately teach controls with these special semantics:
 
-The first complete HAT interaction used to unlock is consumed by the unlock operation and must not also perform a navigation/action event.
+- joystick directions, joystick press and Key A: visual feedback only;
+- Key B release: lock the display;
+- while that instructional page is locked, Key X release: unlock and consume the interaction;
+- Key Y release: invoke HOME resolver.
 
-The new screen set does not declare Lock on every page. The implementation must follow the per-screen canonical contract and must not restore old hidden Lock controls merely because BLU2USB once had them.
+These special B/X/Y meanings come from the visible instructional text and do not redefine Key B/X/Y globally.
 
-## Learn The Keys
+## Searching First Mouse
 
-`PRESS TO LEARN KEYS` is a didactic page. Other than explicitly documented lock/home behavior, its HAT controls demonstrate where the controls are by changing their visual state while pressed rather than performing normal menu navigation.
+`searching-first` is fully didactic while automatic first search runs. Every shown HAT label may provide pressed visual feedback, but no control navigates, locks, cancels or changes search purpose.
 
-It is never the first screen shown at startup. First startup uses `SEARCHING FIRST MOUSE` instead.
+## Color priority
 
-## Searching First Mouse controls
-
-The first-mouse search page is also didactic. Its displayed key/joystick labels react visually to presses but do not navigate away or trigger unrelated actions while the first-pair search is running.
-
-## Selection and colors
-
-The inherited color priority is:
-
-- connected/current/applied positive state: cyan;
+- connected/current/applied/success: cyan;
 - selected or visibly pressed actionable text: white;
-- **white selection/press has priority over cyan**;
-- when selection moves away from a still-current cyan item, it returns to cyan.
+- ordinary options: light gray;
+- static/body text: off-white yellow;
+- title: magenta.
 
-This same priority applies to connected Saved Devices names if a future screen makes such a row selectable.
+White selected/pressed state has priority over cyan. When selection moves away from an item that is still current, cyan returns.
