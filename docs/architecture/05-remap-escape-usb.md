@@ -6,7 +6,7 @@ Profiles/remap operate on canonical events and have no dependency on BTstack, Ti
 
 Input:
 
-- MouseId/session/source identity;
+- current `MouseId` / `MouseSessionId`;
 - confirmed profile kind;
 - canonical physical Mouse event;
 - global Custom template where applicable.
@@ -15,6 +15,8 @@ Output:
 
 - canonical Mouse button/motion target events; or
 - synthetic `EscapeDown` / `EscapeUp` intent.
+
+Only the single current live mouse may feed this pipeline.
 
 ## Exact preset mappings
 
@@ -62,7 +64,7 @@ The architecture therefore permits a narrowly scoped synthetic-keyboard path:
 Mouse canonical event
  -> remap
  -> Escape intent
- -> source-aware Escape ownership
+ -> held Escape state
  -> usb_hid Keyboard Escape report
 ```
 
@@ -89,13 +91,17 @@ No diagnostic CDC, MSC, MIDI or vendor-debug interface is added to the productio
 
 Exact project VID/PID/manufacturer/product strings remain an open product decision. Until frozen, historical BLU2USB strings are evidence only and must not be copied as the final Mouse Bridge Remapper identity by accident.
 
-## Held ownership
+## Held-state safety
 
-Synthetic Escape is source aware, like mouse-button ownership.
+Mouse button and synthetic Escape output are explicit held states for the current session.
 
-If two mapped physical sources own Escape simultaneously, releasing one does not release USB Escape while the other still owns it.
+Two physical inputs from the same mouse may map to the same output target. The implementation must therefore avoid premature release when one physical source releases while another still maps to the same held target.
 
-Profile change, disconnect, removal, parser reset or invalidating queue overflow releases only affected source ownership.
+This ownership/refcounting is **within the current mouse session only**; there is no cross-mouse aggregation because concurrent mouse connections are forbidden.
+
+Before the current session is disconnected, replaced, removed or invalidated by parser/queue failure, all held output attributable to that session is released safely.
+
+A profile change also clears stale held state from the old mapping before the new mapping becomes authoritative.
 
 ## USB backpressure
 
@@ -103,6 +109,6 @@ Persistent button/key state may not be discarded because an endpoint is temporar
 
 ## Logitech HID++
 
-HID++ is upstream of canonical remap output. When Forward is remapped and a supported peer requires diversion to recover true held semantics, the vendor adapter emits correct canonical Forward transitions.
+HID++ is upstream of canonical remap output. When Forward is remapped and a supported peer requires diversion to recover true held semantics, the vendor adapter emits correct canonical Forward transitions for the current session.
 
 Passthrough removes unneeded diversion. Unsupported peers fall back to Standard HID without breaking ordinary mouse input.
