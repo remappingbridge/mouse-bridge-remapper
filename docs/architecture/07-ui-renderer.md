@@ -1,136 +1,103 @@
 # UI and renderer contract
 
+Status: **FROZEN BY MBR-00**.
+
 ## Hardware baseline
 
-Target UI hardware is the Waveshare Pico-LCD-1.3 HAT with ST7789 240x240 display.
+Target UI hardware is Waveshare Pico-LCD-1.3 with ST7789 240x240.
 
-Starting renderer geometry inherits the physically accepted BLU2USB layout lessons:
+Inherited physical baseline:
 
 - 5x7 glyph source, scale 2;
-- glyph box 10x14 pixels;
-- horizontal character advance 11 px;
+- glyph box 10x14 px;
+- horizontal advance 11 px;
 - title origin x=7, y=8;
 - standard first body y=39;
 - standard body advance 26 px;
 - final standard hint y=214, bottom anchored;
-- dark-magenta hint region begins 11 px above the first visible hint;
-- special didactic layouts may use their explicitly documented positions.
+- dark-magenta hint region starts 11 px above first visible hint;
+- didactic screens use the exact frozen token columns in the canonical screen reference.
 
-The current screen reference supersedes historical Keyboard/Composite pages and all superseded simultaneous-mouse count layouts.
+## Semantic width and dynamic names
 
-## Semantic width
+Canonical rows are at most 21 characters.
 
-Canonical text rows use at most 21 characters.
+Mouse names are stored in full normalized form within schema limits. Projection displays the first **21 renderer-supported characters** with no ellipsis or scrolling. Empty/unusable name displays `UNKNOWN MOUSE`.
 
-There is no `N DEVICES CONNECTED` form because only one mouse may be connected. `home-connected` always shows the current mouse name on line 2.
+## Screen authority
 
-## Screen model separation
+`docs/manual/06-screen-reference.md` is the canonical literal screen/control inventory. Renderer code cannot silently correct or reinterpret its text.
 
-`ui_projector` produces semantic rows/tokens/colors/actions from application state. `renderer` draws them.
+Canonical visible profile vocabulary is `STANDARD`, not historical `DEFAULT`.
 
-Renderer must not decide:
+Obvious historical transcription mistakes are normalized in the screen reference, including `T0`→`TO`, `FORWARED`→`FORWARD`, and `kEY`→`KEY`.
 
-- whether a mouse is connected;
-- whether HOME should start a search;
-- which search transaction is active;
-- whether a profile commit succeeded;
-- whether removal succeeded;
-- whether a candidate is saved/new.
+## Separation
 
-It consumes already-decided screen state.
+`ui_projector` builds semantic rows/tokens/colors from application state; renderer draws them. Renderer never decides connection truth, search purpose, timeout, profile commit success, candidate identity or removal success.
 
 ## HOME projection
 
-Application state resolves HOME before rendering:
-
 ```text
 no saved mice -> searching-first
-saved mice + connected mouse -> home-connected
-saved mice + no connected mouse -> home-searching
-saved search timeout -> home-retry
+saved + authoritative Mouse -> home-connected
+saved + no authoritative Mouse -> home-searching
+saved search expires/cancels -> home-retry
 ```
 
-Entering `home-searching` is coupled at the application layer with starting the bounded saved-device search. The renderer only displays the resulting screen.
-
-A `MouseDisconnected` event from the current live session causes immediate reprojection. When saved records remain, the visible HOME becomes `home-searching` and the application starts the saved search without waiting for another HAT input.
-
-## Async projection
-
-Connection, disconnection, search timeout, profile confirmation and removal events update the visible screen immediately when relevant.
-
-Runtime events, not recent input activity, are the source of connection truth.
-
-## Colors
-
-Semantic palette:
-
-- title: magenta;
-- static/body text: off-white yellow;
-- ordinary options/actions: light gray;
-- selected or visibly pressed actionable text: white;
-- connected/current/applied/success state: cyan.
-
-White selection/press has priority over cyan. When selection leaves a still-current item, cyan returns.
-
-### Saved Devices connected name
-
-On a Saved Devices page, the mouse name on line 2 is cyan exactly when that saved mouse is the single current ready session.
-
-Because live capacity is one, at most one Saved Devices page can have a cyan mouse name at a time.
-
-## Dynamic fields
-
-Dynamic values include:
-
-- connected mouse name;
-- Saved Devices pagination;
-- per-saved-mouse status;
-- per-saved-mouse confirmed profile;
-- Custom draft mappings.
-
-Planning annotations such as `(nome do mouse)`, `(paginação)` and `(customizável)` are never rendered.
-
-## Interaction
-
-Actions execute on release.
-
-Visible pressed labels may become white while held. The interaction engine emits semantic commands only after the complete physical press/release interaction.
-
-Help pages own all controls and use `ANY KEY: BACK`.
-
-The unlock interaction is consumed and cannot also activate another screen action.
+When HOME is visible, a live disconnect reprojects immediately to `home-searching` and application starts saved search. When another page owns presentation, connection truth updates but navigation is not forcibly stolen; the HOME resolver applies on next HOME access.
 
 ## Pair New projection
 
-Pair New may start from `home-connected`. The application performs release/disconnect cleanup first, then begins the new-only search. The UI must not continue displaying `MOUSE CONNECTED` for the old mouse after its live session has been cleared.
+Pair New may coexist with the existing authoritative Mouse during discovery. The old Mouse remains the product's live Mouse until replacement handoff.
 
-A failed Pair New does not fabricate a connection. Returning to HOME without a live session resolves to `home-searching` and starts saved search automatically.
+The UI must therefore not project a false disconnect merely because Pair New began. If a candidate becomes replacement-ready and handoff commits, the old session is released/disconnected before the new one is projected as authoritative.
 
-## Didactic coordinates
+If Pair New times out/cancels before handoff, the original Mouse remains live. If the user manually unplugs it, the Pair New/help page may remain visible, but future HOME access resolves to saved search.
 
-For `SEARCHING FIRST MOUSE` / Learn-style geometry:
+## Frozen Pair New Help
 
-- `JOY UP` starts at 1-based column 8;
-- three `JOY` tokens start columns 3, 10, 17;
-- `LEFT`, `PRESS`, `RIGHT` start columns 3, 9, 16;
-- `JOY DOWN` starts column 7;
-- `KEY A`/`KEY X` on the first-search screen start columns 2/16;
-- `KEY B`/`KEY Y` on the first-search screen start columns 2/16;
-- right-side `KEY A/B/X` on Learn/first-connected starts column 16;
-- `LOCK SCREEN` starts column 1;
-- `AND UNLOCK` starts column 2;
-- `OPEN HOME -> KEY Y` starts column 3.
+`help-pair-new` and `help-retry-pair-new` literal rows are exactly those in `docs/manual/06-screen-reference.md`, including the instruction to unplug the currently connected Mouse and Back until `SEARCHING` appears when the user wants a saved device.
 
-Host layout tests must assert token coordinates rather than infer them from visual spacing in Markdown.
+## Colors
 
-## Dynamic-name policy
+- title: magenta;
+- static/body: off-white yellow;
+- ordinary option/action: light gray;
+- selected/visibly pressed: white;
+- connected/current/applied/success: cyan.
 
-The complete long-name truncation/ellipsis policy is still open. Renderer must not invent one. Storage keeps the complete normalized available name; projection will apply the documented presentation policy once frozen.
+White selection/press overrides cyan and cyan returns when selection leaves a still-current item.
 
-## Removed screens and states
+On Saved Devices, only the sole connected Mouse name is cyan. Disconnected pages use ordinary body color and show `STATUS: DISCONNECTED`.
 
-Renderer registry must not contain product pages for Pair Keyboard, Pair Composite, Keyboard Saved, Composite Saved or old Other Devices status/help flows.
+## Interaction projection
 
-It must also not contain a multi-connected HOME/count state.
+Actions execute on release. Help owns all HAT input while visible and `ANY KEY: BACK` consumes the event.
 
-Synthetic Escape requires no Bluetooth Keyboard page.
+No hidden controls are inherited. A control exists only if the canonical per-screen map defines it.
+
+Instructional `first-mouse-connected` / `learn-the-keys` special B/X/Y semantics and fully didactic `searching-first` semantics are frozen in the screen reference.
+
+`JOY LEFT: GO TO HOME` on `escape-active` is intentional and invokes HOME resolver directly.
+
+## Didactic columns
+
+Frozen 1-based columns:
+
+- `JOY UP`: 8;
+- three `JOY`: 3/10/17;
+- `LEFT`/`PRESS`/`RIGHT`: 3/9/16;
+- `JOY DOWN`: 7;
+- first-search `KEY A`/`KEY X`: 2/16;
+- first-search `KEY B`/`KEY Y`: 2/16;
+- instructional right-side `KEY A/B/X`: 16;
+- `LOCK SCREEN`: 1;
+- `AND UNLOCK`: 2;
+- `OPEN HOME -> KEY Y`: 3.
+
+Tests target the intended token, never the first coincidental matching character in a row.
+
+## Removed states
+
+No Pair Keyboard, Pair Composite, Keyboard/Composite saved pages, Other Devices page, multi-connected count state or live-Mouse focus selector exists.
