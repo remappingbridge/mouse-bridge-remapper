@@ -1,6 +1,6 @@
 # Mouse Bridge Remapper
 
-Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing Bluetooth mice, forwarding them to the host over USB, and remapping mouse buttons without host-side software.
+Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing Bluetooth mice, forwarding one connected mouse to the host over USB, and remapping mouse buttons without host-side software.
 
 This repository follows **documentation as product, code as consequence**: the behavior described in the user manual and architecture documentation is the product contract. Firmware must implement that contract; source code is not allowed to silently redefine it.
 
@@ -10,36 +10,40 @@ This repository follows **documentation as product, code as consequence**: the b
 
 - Pairs **mice only** over Bluetooth. Bluetooth Keyboard pairing and Bluetooth Composite-device pairing are not product features.
 - Supports BLE HOGP Mouse as the inherited and currently specified Bluetooth transport.
-- Allows more than one mouse to remain connected at the same time.
-- Keeps each mouse's connection, held-button ownership and profile state independent.
+- Allows many mice to be saved, but **only one mouse may be connected at a time**.
 - Supports Passthrough, Standard/Default, Escape and Custom remapping.
 - Keeps **Escape** as the one intentional keyboard-output exception: a mouse button may emit the USB Keyboard `Escape` key, but physical keyboards are never paired.
-- Saves known mice and their remapping state and attempts saved-device reconnection on startup.
+- Saves known mice and their remapping state.
+- Automatically searches saved mice whenever HOME is entered with saved mice but no current connection.
 - Provides the product UI through the Waveshare Pico-LCD-1.3 HAT.
 
 ## First use
 
 If no mouse has ever been saved, powering on opens `SEARCHING FIRST MOUSE`. Put one mouse into pairing mode. Search continues until a first valid mouse is found and successfully saved.
 
-If several mice are waiting to pair, the product accepts **only the first valid mouse found** and stops that search. Additional mice are added explicitly through `PAIR NEW MOUSE`, one mouse per pairing operation.
-
-After the first mouse is connected, the product does **not** automatically search for a second mouse. Additional mice are connected only because the user explicitly starts another pairing operation.
+If several mice are waiting to pair, the product accepts **only the first valid mouse found** and stops that search.
 
 See [First start and pairing](docs/manual/01-first-start-and-pairing.md).
 
-## Multiple connected mice
+## One connected mouse
 
-All connected mice continue to send movement, wheel and button input concurrently. One mouse disconnecting or releasing a button must not release a button still held by another mouse.
+At most one mouse is connected at any time.
 
-On the connected HOME screen:
+When a mouse is connected, `MOUSE CONNECTED` shows that mouse's display name and confirmed profile.
 
-- with exactly one connected mouse, line 2 shows that mouse's display name;
-- with two or more connected mice, line 2 shows `N DEVICES CONNECTED`;
-- the product-level maximum is **999 connected mice**, making the largest counter `999 DEVICES CONNECTED`, exactly 21 characters.
+When HOME is entered while saved mice exist but none is connected, the product immediately enters `SEARCHING SAVED MOUSE` and starts a bounded search. If no saved mouse is found before timeout, HOME becomes `DEVICE NOT FOUND`.
 
-The Bluetooth/hardware implementation must not claim a physically supported concurrency level without evidence; the 999 value is the product/UI upper bound.
+If the connected mouse is powered off or otherwise disconnects, the product returns to that same saved-search HOME flow automatically.
 
-See [Home and multiple mice](docs/manual/02-home-and-multiple-mice.md).
+See [Home and connection lifecycle](docs/manual/02-home-and-connection.md).
+
+## Pair New replacement behavior
+
+`PAIR NEW MOUSE` is an explicit request to replace the current live connection with a newly paired mouse.
+
+If a mouse is currently connected when Pair New begins, the product first releases its held outputs and disconnects it cleanly. It remains saved. The Pair New search then accepts at most one valid unsaved mouse. If successful, that new mouse becomes the only connected mouse.
+
+If Pair New times out or is canceled, no previous saved record is deleted. The old mouse is not silently reconnected inside Pair New; returning to HOME without a connection starts the normal saved-device search.
 
 ## Remapping
 
@@ -56,7 +60,7 @@ See [Mouse remapping](docs/manual/03-remapping.md).
 
 ## Saved devices
 
-Each saved mouse has its own page. A currently connected mouse's **name on line 2 is cyan**. Disconnected saved mice use the ordinary body-text color. Status and profile are projected independently for every saved mouse.
+Each saved mouse has its own page. Because only one mouse can be connected, at most one Saved Devices page can show a connected state at a time. The connected mouse's **name on line 2 is cyan**; disconnected saved mice use the ordinary body-text color.
 
 See [Saved devices](docs/manual/04-saved-devices.md).
 
@@ -71,7 +75,7 @@ See [Controls, lock and help](docs/manual/05-controls-lock-and-help.md) and the 
 ### User manual
 
 1. [First start and pairing](docs/manual/01-first-start-and-pairing.md)
-2. [Home and multiple mice](docs/manual/02-home-and-multiple-mice.md)
+2. [Home and connection lifecycle](docs/manual/02-home-and-connection.md)
 3. [Mouse remapping](docs/manual/03-remapping.md)
 4. [Saved devices](docs/manual/04-saved-devices.md)
 5. [Controls, lock and help](docs/manual/05-controls-lock-and-help.md)
@@ -82,7 +86,7 @@ See [Controls, lock and help](docs/manual/05-controls-lock-and-help.md) and the 
 1. [Documentation authority](docs/architecture/00-documentation-authority.md)
 2. [Product contract](docs/architecture/01-product-contract.md)
 3. [System architecture](docs/architecture/02-system-architecture.md)
-4. [Multi-mouse domain and HID aggregation](docs/architecture/03-multi-mouse-domain.md)
+4. [Mouse session domain](docs/architecture/03-mouse-session-domain.md)
 5. [Bluetooth lifecycle and pairing](docs/architecture/04-bluetooth-lifecycle.md)
 6. [Remap, Escape and USB contract](docs/architecture/05-remap-escape-usb.md)
 7. [Persistence and removal](docs/architecture/06-persistence-and-removal.md)
