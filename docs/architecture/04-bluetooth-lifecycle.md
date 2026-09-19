@@ -1,123 +1,121 @@
 # Bluetooth lifecycle and pairing
 
+Status: **FROZEN BY MBR-00**.
+
 ## Transport scope
 
-The specified Mouse transport is BLE HOGP, inherited from the accepted BLU2USB G06 mouse path.
-
-Bluetooth Classic Keyboard and BLE/Classic Keyboard product paths are absent. Bluetooth Composite is not a product device type.
-
-## Single BT runtime owner
+Production Mouse transport is **BLE HOGP only**. Bluetooth Classic Mouse, Bluetooth Keyboard input and Bluetooth Composite product support are out of scope.
 
 Exactly one module owns CYW43/BTstack initialization, lifecycle and run-loop integration.
 
-Only one Mouse HOGP session may be ready at a time. Session state includes connection/security phase, HIDS client context, Report Map, parsed mouse fields, subscriptions, identity correlation, timers/retries and optional HID++ state.
+## Session identities
 
-A session generation/token is retained so late callbacks from an old disconnected session cannot affect its replacement.
+The product has zero or one authoritative ready `MouseSession`. A generation/token prevents late callbacks from an old/replaced session from mutating a newer session.
 
-## Transaction purposes
+During Pair New, implementation may create one non-authoritative candidate transport/HIDS context for qualification if required. It cannot forward authoritative product Mouse input or be counted as the live Mouse before handoff.
 
-Discovery is governed by explicit transaction purpose.
+## FIRST_MOUSE
 
-### First mouse
-
-Precondition: no saved mouse exists.
+Precondition: registry empty.
 
 ```text
-finite discovery cycle
- -> candidate
- -> authenticate
- -> inspect/classify Mouse capability
- -> persist product identity/state
- -> reach ready session
- -> stop first-search transaction
+start 8-second discovery cycle
+ -> unsaved candidate
+ -> authenticate/security
+ -> inspect Report Map and classify Mouse
+ -> persist product state
+ -> promote to authoritative ready Mouse
+ -> stop transaction
 ```
 
-If no candidate succeeds, start another finite cycle. Logical first search therefore continues until a first mouse is accepted.
+No success in the cycle -> start another 8-second cycle automatically. Logical first search is therefore continuous.
 
-If several valid unsaved candidates are waiting, the first accepted candidate wins. Later candidates from the same transaction are canceled/ignored.
+First valid accepted candidate wins.
 
-### Saved search
+## SEARCH_SAVED
 
-Precondition: saved mice exist and no mouse is currently connected.
+Precondition: saved mice exist and no authoritative Mouse is live.
 
-Entering HOME under that condition automatically starts a bounded saved-device search.
+Entering HOME starts one **8-second** saved-search transaction. Use bond/IRK/resolving/accept-list facilities as appropriate to reconnect known peers. First saved Mouse reaching ready state wins and ends the transaction.
 
-The coordinator may try eligible saved identities using bond/resolving/accept-list facilities as appropriate. The first saved mouse that reaches ready state wins, occupies the single live slot and ends the search.
+Timeout/cancel publishes the `home-retry` / `DEVICE NOT FOUND` state.
 
-If the bounded window expires with no ready mouse, publish `home-retry` / `DEVICE NOT FOUND`.
+## Disconnect recovery
 
-### Disconnect recovery
+On authoritative session disconnect:
 
-When the current mouse disconnects unexpectedly:
+1. stop/ignore further events for the old generation;
+2. release every held Mouse/Escape output belonging to it;
+3. clear the authoritative live slot;
+4. publish `MouseDisconnected`;
+5. if HOME owns presentation, invoke HOME resolver immediately;
+6. otherwise keep connection truth accurate and invoke HOME resolver when HOME is next accessed.
 
-1. release all held Mouse/Escape output for that session;
-2. clear the live slot;
-3. publish `MouseDisconnected`;
-4. resolve HOME;
-5. if saved mice remain, enter `home-searching` and automatically start the bounded saved-device search.
+There is no hidden infinite reconnect loop outside HOME policy.
 
-There is no separate infinite reconnect loop hidden behind `home-connected`.
+## PAIR_NEW
 
-### Pair New
+Pair New is a **15-second** new-only transaction.
 
-Pair New is manually initiated and accepts only an unsaved valid Mouse.
+If an authoritative Mouse is already live, it stays connected and usable while discovery/qualification runs.
 
-If a mouse is currently connected, Pair New first performs a replacement teardown:
+Candidate rules:
 
-1. stop accepting new events from the current session;
-2. release held output;
-3. disconnect the current HOGP session;
-4. clear the live slot;
-5. keep the mouse saved and keep its bond;
-6. begin new-only discovery.
+- must classify as compatible BLE HOGP Mouse;
+- must be unsaved under product identity rules;
+- an already-saved candidate is ignored as a Pair New winner and search continues;
+- first unsaved candidate that completes qualification wins the candidate race.
 
-The first valid unsaved mouse that completes acceptance wins, is persisted, becomes the sole ready session and ends Pair New.
+Candidate qualification ends at a non-authoritative `REPLACEMENT_READY` state. Only then is handoff committed:
 
-If Pair New times out or is canceled, the previous mouse remains saved but disconnected. Pair New does not silently reconnect it. Returning to HOME with no connection starts the normal saved-device search.
+1. mark old authoritative session as closing and reject new input from it;
+2. release all held Mouse/Escape output from old session;
+3. disconnect/clear old authoritative session while preserving its saved record/bond;
+4. persist/verify new product identity/profile defaults as required;
+5. promote the replacement candidate to authoritative ready state;
+6. publish `MouseReady` for the new generation;
+7. stop Pair New.
 
-### Cancel
+At all times:
 
-Cancel affects only the current search/pair transaction. It never deletes a saved mouse.
+```text
+authoritative_ready_mouse_count <= 1
+```
 
-Any candidate session owned by the canceled transaction must be cleaned up so it cannot become ready later through a stale completion.
+If Pair New expires/cancels before handoff, candidate state is cleaned up and the original authoritative Mouse remains connected.
+
+If the user manually powers off/unplugs the current Mouse while Pair New/help is active, ordinary disconnect cleanup clears the live slot. Pair New remains new-only; it does not turn into saved search. When HOME is later reached, HOME resolver starts SEARCH_SAVED.
+
+## Cancel
+
+Cancel only cancels its transaction. It never deletes a saved Mouse. Candidate transport state must be cleaned so stale completion cannot later become authoritative.
 
 ## Candidate classification
 
-Advertisement appearance alone is insufficient. The HOGP path obtains and inspects Report Map/capabilities before accepting a peer as Mouse.
+Advertisement appearance is insufficient. HOGP Report Map/capabilities are inspected before Mouse acceptance. Keyboard-only HID candidates are rejected.
 
-Keyboard-only HID candidates are rejected.
-
-Transport framing is normalized inside the adapter. Duplicated Report-ID framing, malformed lengths and incompatible field layouts are rejected before canonical event emission.
+Duplicate Report-ID framing accepted by the G06 compatibility path is normalized inside the adapter. Malformed/truncated/incompatible frames are rejected before canonical event emission.
 
 ## Bonded reconnect
 
-BTstack remains owner of BLE security credentials. Existing bond/IRK/LTK state should be reused for saved reconnection so devices such as Logitech Lift can reconnect after Pico power loss without fresh pairing mode.
+BTstack owns security credentials. Saved search reuses valid bond/IRK/LTK state; Logitech Lift and similar devices should reconnect without requiring fresh pairing mode when credentials remain valid.
 
-Saved search is bounded. An absent peer cannot trap HOME forever.
+The 8-second saved-search window prevents an absent peer from blocking HOME indefinitely.
 
-## Asynchronous UI events
+## Semantic events
 
-Bluetooth publishes semantic events such as:
+Examples:
 
 ```text
 MouseReady(mouse_id, session_id)
 MouseDisconnected(mouse_id, session_id, reason)
-SearchExpired(transaction_id)
+SavedSearchExpired(transaction_id)
+PairNewCandidateReady(transaction_id, candidate_session_id)
 PairNewExpired(transaction_id)
 ```
 
-Transaction/session IDs prevent late completion from an old or canceled operation from mutating current UI/runtime state.
+Session/transaction identities make stale events ignorable.
 
 ## Failure safety
 
-Connection/security/HIDS/report failures return to coordinator policy rather than blocking the product loop.
-
-Disconnect, replacement, removal, parser failure or queue continuity loss while a button/Escape is held must release that held state before the session is discarded.
-
-## Hard invariant
-
-A second candidate may be discovering or connecting transiently only if it cannot become authoritative or ready while the current live session still exists. Product-visible ready state always satisfies:
-
-```text
-ready_mouse_count <= 1
-```
+Security/HIDS/parser/report failures return to coordinator policy and never trap USB/UI servicing. Disconnect, handoff, removal, profile change or queue-continuity loss releases held state before authoritative session disposal.
