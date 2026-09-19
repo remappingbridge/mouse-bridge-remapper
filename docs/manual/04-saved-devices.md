@@ -2,6 +2,8 @@
 
 `SAVED DEVICES` is the persistent per-mouse view. It shows one saved mouse per page.
 
+The product may store multiple saved mice, but **only one mouse may be connected at a time**.
+
 ## Pagination
 
 The title is dynamic:
@@ -14,7 +16,7 @@ The title is dynamic:
 ...
 ```
 
-`JOY RIGHT\LEFT: PAGE` moves between mouse pages. Pagination represents saved mice, not only currently connected mice.
+`JOY RIGHT\LEFT: PAGE` moves between saved-mouse pages. Pagination represents saved mice, not live connections.
 
 ## Page contents
 
@@ -36,32 +38,36 @@ Line 2 is the saved mouse's display name.
 
 ### Connected-name color
 
-If that saved mouse is **currently connected**, its name on line 2 is **cyan**.
+If the mouse shown on that page is the **single currently connected mouse**, its name on line 2 is **cyan**.
 
-If that saved mouse is not currently connected, the name uses the ordinary body-text color.
+All other saved-mouse names use the ordinary body-text color.
 
-Connection coloring is independently derived for each saved mouse. With several connected mice, several Saved Devices pages may correctly show cyan names at the same time.
+Because only one mouse can be connected, at most one Saved Devices page can have a cyan mouse name at any time.
 
 ### Status
 
-`STATUS:` reflects the current runtime state of that specific saved mouse, not a global “active mouse” flag.
+`STATUS:` reflects that specific saved mouse:
 
-At minimum:
+- `CONNECTED` means it owns the current ready live session;
+- every other saved mouse is not connected.
 
-- `CONNECTED` means a current ready session exists for that saved mouse;
-- a saved mouse with no ready live session must not be falsely labeled connected.
-
-The exact disconnected display word remains part of the product vocabulary that must be frozen before renderer implementation.
+The exact disconnected display word remains part of the product vocabulary that must be frozen before final renderer acceptance.
 
 ### Profile
 
 `PROFILE:` shows the mouse's **confirmed saved profile**, not an in-progress draft or optimistic Apply result.
 
-The profile identity is per saved mouse even though the inherited Custom mapping template is global.
+Each saved mouse keeps its own confirmed profile kind. The inherited Custom mapping template remains global unless the product contract is later changed.
+
+## Opening HOME from a disconnected state
+
+Saved Devices does not itself create parallel connections.
+
+Whenever the user returns to HOME and saved mice exist but none is connected, HOME enters `SEARCHING SAVED MOUSE` and automatically starts a bounded search. The first saved mouse that reaches ready state becomes the sole connected mouse.
 
 ## Remove device
 
-Selecting `REMOVE DEVICE` opens the confirmation page for that mouse.
+Selecting `REMOVE DEVICE` opens the confirmation page for that saved mouse.
 
 ```text
 REMOVE THIS MOUSE
@@ -75,22 +81,20 @@ KEY B: CANCEL
 KEY X: HELP
 ```
 
-Removal means more than hiding the row. A successful remove operation coordinates:
+A successful remove operation coordinates:
 
-- release of any held output owned by that mouse;
-- disconnection of its current session, if connected;
+- release of held output if this is the currently connected mouse;
+- disconnection of its live session if connected;
 - deletion of its saved product record/profile association;
 - deletion of its Bluetooth security relationship where applicable;
 - persistence of the new state.
 
-Other connected mice keep working throughout removal except for any bounded shared-runtime interruption that the architecture explicitly proves safe.
-
 If the removed mouse was the **last saved mouse**, the product returns to first-mouse onboarding and automatically begins searching for a new first mouse.
 
-If at least one saved mouse remains, the product returns to Saved Devices on a valid remaining page.
+If at least one saved mouse remains, the product returns to Saved Devices on a valid remaining page. Removing a disconnected saved mouse does not disturb the current live mouse.
 
 ## Help
 
 The Remove help screen explains that removal deletes automatic reconnection and the mouse's remapping profile association.
 
-Removal must not be reported as complete before the product has reached its documented commit point. A partially deleted record must never be projected as a successful removal.
+Removal must not be reported as complete before the product reaches its documented commit point. A partially deleted record must never be projected as a successful removal.
