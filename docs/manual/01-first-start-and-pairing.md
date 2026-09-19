@@ -1,77 +1,90 @@
 # First start and pairing
 
-This chapter defines how Mouse Bridge Remapper discovers, reconnects and replaces its single live mouse connection.
+Status: **FROZEN BY MBR-00**.
+
+This chapter defines how Mouse Bridge Remapper discovers, reconnects and replaces its single authoritative Mouse connection.
 
 ## First mouse
 
-When the product starts with **no saved mouse**, the first screen is `SEARCHING FIRST MOUSE`.
+When the product starts with **no saved Mouse**, the first screen is `SEARCHING FIRST MOUSE`.
 
-The product immediately begins searching for a valid BLE HOGP mouse. The first-mouse search is logically continuous: internally it may use finite scan/connect cycles, but it keeps restarting them until one mouse is successfully found, authenticated, classified as a mouse, saved and ready.
+The product immediately searches for a valid BLE HOGP Mouse. The first-Mouse search is logically continuous: it uses restartable **8-second discovery cycles** until one Mouse is successfully authenticated, classified as a Mouse, persisted and made ready.
 
-If several unsaved mice are waiting to pair, **only the first valid mouse found is paired**. As soon as that mouse is accepted, the search ends.
+If several unsaved mice are waiting, only the first valid candidate accepted becomes the first Mouse. The transaction then stops.
 
-The `SEARCHING FIRST MOUSE` screen is didactic while search runs. HAT controls shown on the screen only provide their declared pressed/released visual feedback; they do not navigate away from the search.
+`SEARCHING FIRST MOUSE` is didactic while search runs. Its HAT labels provide visual press/release feedback only; they do not navigate, cancel or lock.
 
 ## First successful connection
 
-After the first mouse is successfully persisted and ready, the product shows `FIRST MOUSE CONNECTED` before normal HOME use.
+After the first Mouse is persisted and ready, the product shows `FIRST MOUSE CONNECTED` before ordinary HOME use.
 
-This success screen must not be shown merely because an advertisement was seen or a connection handle was allocated. The mouse must have completed the accepted connection/classification/persistence path.
+This screen must not appear merely because an advertisement was seen or a connection handle was allocated.
 
-## Startup when saved mice exist
+On this instructional screen, Key B locks the display, Key X unlocks it while locked, and Key Y opens HOME. Other displayed controls are didactic visual feedback only. Actions happen on release.
 
-When one or more mice are already saved, startup resolves HOME as follows:
+## Startup and HOME when saved mice exist
 
-- if one saved mouse becomes connected, HOME becomes `MOUSE CONNECTED`;
-- while no mouse is connected, HOME enters `SEARCHING SAVED MOUSE` and automatically starts a bounded search;
-- the first saved mouse that successfully reaches ready state wins and the search stops;
-- if none is found before timeout, HOME becomes `DEVICE NOT FOUND`.
+The same HOME resolver is used at startup and later navigation:
 
-Only one mouse may be connected at a time.
+```text
+no saved mice
+  -> searching-first
 
-## Reconnection after the connected mouse is turned off
+saved mice + one live Mouse
+  -> home-connected
 
-If the live mouse is powered off, leaves range or otherwise disconnects, the product clears that live session and returns to the same HOME rule used at startup.
+saved mice + no live Mouse
+  -> home-searching + automatic 8-second saved-device search
+```
 
-Because saved mice still exist and none is connected, HOME automatically enters `SEARCHING SAVED MOUSE` and starts a bounded saved-device search. If no saved device is found, the flow ends at `DEVICE NOT FOUND` after the configured search interval.
+The first saved Mouse that reaches ready state becomes the sole live Mouse and saved search stops. If none is found before timeout, HOME becomes `DEVICE NOT FOUND`.
 
-## Pairing a new mouse
+## Reconnection after the connected Mouse is turned off
 
-Use `PAIR NEW MOUSE` to add an unsaved mouse.
+If the live Mouse is powered off, leaves range or otherwise disconnects, held Mouse/Escape output from that session is released and the live slot becomes empty.
 
-Pair New is also a **live-connection replacement** operation.
+If HOME is visible, the HOME resolver immediately enters `SEARCHING SAVED MOUSE` and starts the bounded saved search. If the disconnect occurs on another screen, connection truth still updates immediately; the next access to HOME resolves from the now-empty live slot and starts the same saved search.
 
-If a mouse is currently connected when Pair New begins:
+If no saved Mouse reconnects during the 8-second window, the flow ends at `DEVICE NOT FOUND`.
 
-1. its held Mouse/Escape output is released;
-2. its BLE session is disconnected cleanly;
-3. its Saved Devices record remains intact;
-4. the product starts searching for an unsaved mouse;
-5. the first valid unsaved mouse accepted becomes the sole connected mouse.
+## Pair New
 
-If several unsaved mice are waiting, only the first valid candidate is accepted and the Pair New search stops.
+`PAIR NEW MOUSE` searches for one **unsaved** BLE HOGP Mouse for **15 seconds**.
 
-If Pair New fails or is canceled, no saved record is deleted. The previously connected mouse remains saved but is no longer live. Returning to HOME with no connection starts the normal saved-device search automatically.
+Pair New is a replacement operation, but it does **not** disconnect the current Mouse merely because search began. If a Mouse is already live, it remains connected, authoritative and usable while Pair New discovers and qualifies an unsaved replacement candidate.
 
-## Saved search vs Pair New
+A Mouse already present in Saved Devices is not a valid Pair New winner. Such a candidate is ignored for Pair New acceptance and the same 15-second new-only search continues.
 
-The product intentionally distinguishes two transaction purposes:
+When an unsaved candidate is fully qualified as replacement-ready, the product performs one controlled handoff:
 
-- **saved-device search** tries to reconnect any eligible mouse already known to the product;
-- **Pair New** tries to add one mouse that is not already saved.
+1. stop accepting new input from the old live session;
+2. release all held Mouse-button and synthetic-Escape output belonging to it;
+3. disconnect and clear the old live session while preserving its saved record and bond;
+4. persist/confirm the new Mouse as required;
+5. promote the new candidate as the **only** authoritative ready Mouse;
+6. stop Pair New.
 
-A transaction never silently changes purpose.
+At no point are two product-ready/authoritative mice allowed.
 
-## One result and one live connection
+If Pair New expires or is canceled **before handoff**, the existing live Mouse remains connected and unchanged. No saved record is deleted.
 
-Every discovery transaction has a single-winner rule:
+## Connecting a saved Mouse instead of a new one
 
-1. discover candidates;
-2. validate/classify them;
-3. accept the first candidate satisfying the transaction;
-4. finish persistence/connection;
-5. stop the transaction.
+Pair New never changes purpose into saved-device reconnect.
 
-And at all times:
+The Pair New Help text instructs the user to turn off/unplug the currently connected Mouse and press Back until HOME reaches `SEARCHING SAVED MOUSE`. This works because HOME with saved mice and no live connection automatically starts the normal saved-device search.
 
-> at most one mouse may be in the ready/connected state.
+Thus:
+
+- Pair New = search for an unsaved Mouse;
+- HOME search = reconnect a saved Mouse.
+
+## One winner and one authoritative connection
+
+Every discovery transaction accepts at most one winner. Product-visible runtime always satisfies:
+
+```text
+ready_authoritative_mouse_count <= 1
+```
+
+A replacement candidate may have transient transport state while it is being qualified, but it cannot become the product's live/authoritative Mouse until the previous live session has completed the handoff cleanup.
