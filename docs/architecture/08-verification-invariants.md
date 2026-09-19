@@ -11,42 +11,45 @@ This document defines the product properties that implementation and tests must 
 5. Product persistence is separate from BT credentials.
 6. No Bluetooth Keyboard/Composite product module or UI flow is introduced.
 7. Synthetic Escape is output-only and cannot become an excuse for Bluetooth keyboard input support.
-8. Runtime connection truth is a set of sessions, not one global active mouse.
+8. At most one Mouse session may be ready/connected at any time.
+9. Multiple saved mice are allowed and remain independent persistent records.
 
 ## Pairing/search invariants
 
 1. First-mouse search continues until one valid first mouse is accepted.
-2. Every search/pair transaction accepts at most one winning new/target mouse.
-3. If multiple candidates are waiting, first valid accepted candidate wins and that transaction stops.
-4. Saved-device startup search is bounded.
-5. As soon as one saved mouse becomes ready, automatic saved search stops.
-6. With one or more mice already connected, the product does not automatically search merely to add another mouse.
-7. Pair New is explicit and does not disconnect existing mice.
-8. Canceling/failed Pair New preserves existing saved/connected mice.
+2. Every discovery transaction accepts at most one winner.
+3. If multiple candidates satisfy a transaction, the first valid accepted candidate wins and that transaction stops.
+4. Saved-device search is bounded.
+5. Whenever HOME is entered with saved mice and no connected mouse, saved-device search starts automatically.
+6. If saved-device search expires without a connection, HOME becomes `DEVICE NOT FOUND`.
+7. If the current mouse disconnects while saved mice remain, HOME enters `home-searching` and starts the same bounded saved-device search automatically.
+8. Pair New disconnects the current live mouse before a new candidate may become ready.
+9. Pair New failure/cancel does not delete the previous mouse's saved record or bond.
+10. Pair New does not silently reconnect the previous mouse; ordinary HOME resolution performs saved search when appropriate.
 
-## Multi-mouse HID invariants
+## Single-session HID invariants
 
-1. Each mouse/session has independent source identity.
-2. One mouse release cannot release another mouse's held host button.
-3. One mouse disconnect cannot release another mouse's ownership.
-4. Profile transition cleans only stale ownership belonging to the affected mouse/source.
+1. The current session has explicit held-state ownership for Mouse buttons and synthetic Escape.
+2. Two physical source buttons from the same mouse mapping to the same output cannot cause premature release.
+3. Disconnect/replacement/removal releases all held output from the outgoing session before it is discarded.
+4. Profile transition clears stale held state from the old mapping before the new mapping becomes authoritative.
 5. Duplicate button transitions are idempotent.
 6. Queue/parser failure is release-safe.
-7. Movement/wheel/pan from several mice can coexist without converting transient deltas into held state.
-8. Synthetic Escape uses source-aware ownership and cannot become stuck after disconnect/profile change/removal.
+7. Movement/wheel/pan remain transient and are consumed only according to the USB backpressure contract.
+8. Stale callbacks from an old session generation cannot affect the replacement session.
 
 ## UI invariants
 
-1. With one connected mouse, HOME line 2 shows its name.
-2. With two or more connected mice, HOME line 2 is exactly `<N> DEVICES CONNECTED`.
-3. Count cannot exceed 999; `999 DEVICES CONNECTED` fits 21 columns.
-4. Connected Saved Devices mouse name on line 2 is cyan.
-5. Each Saved Devices page derives connection state independently.
-6. Selected/pressed white overrides current/connected cyan.
-7. Async connect/disconnect redraws relevant UI without requiring another HAT event.
-8. Actions execute on release.
-9. Help uses its own interaction ownership.
-10. Removed Keyboard/Composite pages cannot reappear in the screen registry.
+1. `home-connected` always represents exactly one connected mouse.
+2. HOME line 2 shows that mouse's name; there is no multi-device count form.
+3. The remap summary and remapper actions refer to that same connected mouse.
+4. In Saved Devices, only the connected mouse's name may be cyan; at most one page is cyan at a time.
+5. Selected/pressed white overrides current/connected cyan.
+6. Async connect/disconnect/search-timeout events redraw relevant UI without requiring another HAT event.
+7. Actions execute on release.
+8. Help uses its own interaction ownership.
+9. Removed Keyboard/Composite pages cannot reappear in the screen registry.
+10. No simultaneous-mouse focus/selector state is present.
 
 ## Profile invariants
 
@@ -62,12 +65,14 @@ This document defines the product properties that implementation and tests must 
 ## Persistence invariants
 
 1. Saved identities/profile state survive reboot.
-2. Custom template survives reboot.
-3. Accepted unapplied Custom draft state survives reboot if the inherited behavior is retained.
-4. Corrupt/torn newest product generation falls back to a previous valid generation.
-5. Product-state storage cannot overwrite BLE credentials.
-6. Removing a mouse removes its product association and matching credential state transactionally/recoverably.
-7. Removing the last saved mouse returns to first-mouse search.
+2. Multiple saved mice may persist even though only one can be connected.
+3. Custom template survives reboot.
+4. Accepted unapplied Custom draft state survives reboot if the inherited behavior is retained.
+5. Corrupt/torn newest product generation falls back to a previous valid generation.
+6. Product-state storage cannot overwrite BLE credentials.
+7. Removing a mouse removes its product association and matching credential state transactionally/recoverably.
+8. Pair New disconnecting a mouse does not remove its saved product state.
+9. Removing the last saved mouse returns to first-mouse search.
 
 ## USB invariants
 
@@ -94,6 +99,6 @@ The new implementation must preserve the lessons behind accepted fixes, not mere
 
 ## Evidence discipline
 
-A compiled artifact proves compilation only. Hardware behavior such as simultaneous connections, reconnect, button hold semantics and display placement requires appropriate physical evidence before it can be described as validated.
+A compiled artifact proves compilation only. Hardware behavior such as pairing, saved reconnect, Pair New replacement, held-button cleanup, display placement and timeout transitions requires appropriate physical evidence before it can be described as validated.
 
-The product maximum of 999 is a specification bound; release evidence must separately state the largest simultaneous BLE count actually validated on hardware.
+There is no simultaneous-mouse capacity qualification requirement because simultaneous live mouse connections are outside the product contract.
