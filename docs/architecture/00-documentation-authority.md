@@ -1,92 +1,73 @@
 # Documentation authority
 
+Status: **MBR-00 CONTRACT FROZEN**.
+
 ## Principle
 
 Mouse Bridge Remapper uses **documentation as product, code as consequence**.
 
-The normative order is:
+Normative order:
 
 1. current user manual and architecture documents in this repository;
 2. explicit later product decisions recorded by updating those documents;
-3. accepted historical BLU2USB behavior where this documentation deliberately inherits it;
-4. source code as an implementation of the documentation.
+3. accepted historical BLU2USB behavior where current docs deliberately inherit it;
+4. source code as an implementation of documentation.
 
-Code, tests, comments or historical branches do not override current documentation merely because they already exist.
+Code/tests/comments/history never override current documentation by inertia.
 
 ## Historical baseline
 
-The stable behavioral reference is BLU2USB G06 at accepted SHA:
+Stable behavioral reference: BLU2USB G06 accepted SHA
 
 `7eee024ad4ee726c5a85ffa2f32b9f47187878af`
 
-The product inherits relevant mouse behavior and bug fixes from that baseline, including:
+Inherited Mouse lessons include BLE HOGP classification, release-safe cleanup, fixed USB structure, profiles/remap, persistent profile/Custom state, bounded bonded reconnect, Logitech HID++ Forward hold correction, release-triggered HAT behavior, color priority and accepted renderer geometry.
 
-- BLE HOGP mouse discovery/classification;
-- release-safe held-state cleanup on disconnect/overflow;
-- fixed USB identity independent from Bluetooth state;
-- profile/remap behavior;
-- persistent profile and Custom state;
-- bounded bonded reconnect/fallback;
-- Logitech Lift HID++ Forward hold correction;
-- release-triggered HAT interaction;
-- current/applied cyan with selected/pressed white priority;
-- accepted renderer geometry/pixel-relocation lessons.
+The baseline is evidence, not a tree to copy blindly.
 
-The baseline is not copied blindly. The current product explicitly chooses **one live mouse connection at a time**, while retaining multiple saved mice.
+## Current product model
 
-## Superseded complexity
+- many saved Mouse records;
+- zero or one authoritative connected Mouse;
+- optional non-authoritative replacement candidate only during explicit Pair New qualification;
+- Pair New keeps a healthy current Mouse live until replacement handoff;
+- HOME with saved mice + no live Mouse starts bounded saved search;
+- Bluetooth Mouse transport is BLE HOGP only.
 
-Any previously planned simultaneous multi-mouse runtime is superseded.
+Previously planned simultaneous-authoritative-Mouse runtime/count/focus/capacity behavior is superseded and must not be preserved as speculative future-proofing.
 
-The implementation must not preserve multi-session HIDS coordination, cross-mouse held-button aggregation, connection-count UI, profile-focus rules for multiple live mice, or simultaneous-BLE capacity gates merely because they were documented earlier.
+## Pair New authority
 
-The current model is:
+The latest Pair New Help/flow clarification is normative:
 
-- many saved mice;
-- zero or one connected mouse;
-- Pair New replaces the live connection;
-- HOME with saved mice and no live connection automatically starts a bounded saved-device search.
+- healthy current Mouse remains connected during Pair New search;
+- saved candidates are not accepted by Pair New;
+- an unsaved candidate is qualified as non-authoritative replacement-ready;
+- old Mouse is release-cleaned/disconnected only at handoff;
+- old saved record/bond remains;
+- timeout/cancel before handoff leaves old Mouse live;
+- to reconnect a saved Mouse, user unplugs current Mouse and Backs until HOME reaches SEARCHING.
 
-## Explicitly excluded historical behavior
+## Explicitly excluded Bluetooth behavior
 
-This product does not expose Bluetooth pairing or saved-device flows for:
+No:
 
-- Keyboard;
-- Composite Mouse+Keyboard peers as a product type.
-
-Historical G07+ Keyboard work is not an implementation baseline for this product.
+- Bluetooth Keyboard discovery/pairing/input;
+- Bluetooth Composite Mouse+Keyboard product role;
+- Bluetooth Classic Mouse;
+- Keyboard/Composite saved records or UI;
+- G07+ Keyboard implementation as production baseline.
 
 ## Escape exception
 
-Escape is an explicit exception to the mouse-only Bluetooth input scope. A mouse button may generate standard USB Keyboard Escape through a minimal firmware-owned output capability.
+A Mouse button may generate standard USB Keyboard Escape through the fixed minimal output interface. This does not authorize Bluetooth Keyboard support or general keyboard remapping.
 
-This exception does not authorize:
+## Canonical screen authority
 
-- Bluetooth Keyboard discovery;
-- Bluetooth Keyboard pairing;
-- keyboard saved-device records;
-- keyboard input parsing;
-- Pair Keyboard UI;
-- Pair Composite UI;
-- general keyboard remapping.
+`docs/manual/06-screen-reference.md` is the literal screen/control contract. Exact rows, controls, coordinates, status words, profile vocabulary and Help text are implementation requirements.
 
-## Normative vs explanatory text
+## Frozen decisions
 
-Statements using `must`, `must not`, exact screen blocks, exact mapping tables, colors, limits and state-transition requirements are normative.
+MBR-00 closed implementation-blocking product decisions. `docs/architecture/09-open-decisions.md` now records those frozen choices rather than an unresolved queue.
 
-Architecture diagrams and rationale explain the contract but may not weaken normative behavior.
-
-## Updating the product
-
-A behavior change is made by updating documentation first. The update should identify:
-
-- changed user-visible behavior;
-- architecture/invariant impact;
-- migration impact on persistent state when relevant;
-- required verification changes.
-
-Only after the documentation is coherent should code be changed to match it.
-
-## Open decisions
-
-If documentation explicitly marks a product decision open, implementation must preserve the ability to resolve it later and must not choose a user-visible behavior silently. Current open decisions are maintained in `09-open-decisions.md`.
+Any future change must update documentation first and state its architecture, persistence and verification impact before code changes.
