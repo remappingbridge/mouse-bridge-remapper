@@ -1,10 +1,10 @@
 # Canonical screen reference
 
-This document is the user-facing screen inventory. Parenthetical annotations used during planning are not rendered. Dynamic fields are described below their screen.
+Status: **FROZEN BY MBR-00**.
 
-Unless explicitly stated otherwise, rows must fit the 21-character semantic width.
+This document is the executable user-facing screen inventory. Parenthetical annotations from historical planning are metadata and are never rendered. Unless explicitly stated otherwise, rows fit the 21-character semantic width.
 
-The product may have many saved mice, but at most one mouse may be connected at any time.
+The product may have many saved mice, but at most one mouse may be connected/authoritative at any time. Actions execute on release.
 
 ## searching-first
 
@@ -20,9 +20,13 @@ WHILE WAIT CONNECTION
  KEY B         KEY Y
 ```
 
-Shown when no mouse is saved. Search continues until one valid first mouse is accepted. If several candidates wait to pair, only the first valid one is accepted and search stops.
+Shown when no mouse is saved. First-Mouse search is logically continuous, implemented as restartable 8-second cycles until one valid BLE HOGP Mouse is accepted.
 
-Coordinates: `JOY UP` starts column 8; the three `JOY` tokens start columns 3/10/17; `LEFT`/`PRESS`/`RIGHT` start 3/9/16; `JOY DOWN` starts 7; `KEY A`/`KEY X` start 2/16; `KEY B`/`KEY Y` start 2/16.
+All displayed HAT controls are didactic only on this screen: while held, the corresponding visible label becomes white; on release it returns to its resting color. No control navigates, locks or cancels first search.
+
+Frozen 1-based token columns: `JOY UP` 8; three `JOY` tokens 3/10/17; `LEFT`/`PRESS`/`RIGHT` 3/9/16; `JOY DOWN` 7; `KEY A`/`KEY X` 2/16; `KEY B`/`KEY Y` 2/16.
+
+Canonical screen ID is `searching-first`. `searching-first-mouse` is a historical alias only.
 
 ## first-mouse-connected
 
@@ -38,7 +42,16 @@ LOCK SCREEN    KEY B
   OPEN HOME -> KEY Y
 ```
 
-Shown only after the first mouse has been successfully connected and saved.
+Shown only after the first Mouse has been authenticated, classified, persisted and made ready.
+
+Controls on this instructional screen are frozen as follows:
+
+- joystick directions/press and Key A: visual didactic feedback only;
+- Key B release: lock the LCD presentation;
+- while this screen is locked, Key X release: unlock; the interaction is consumed and remains on this screen;
+- Key Y release: open HOME, which resolves to `home-connected` while the Mouse remains live.
+
+Frozen columns follow the displayed instructional geometry: `JOY UP` 8; three `JOY` 3/10/17; `LEFT`/`PRESS`/`RIGHT` 3/9/16; `JOY DOWN` 7; right-side `KEY A`, `KEY B`, `KEY X` start at 16; `LOCK SCREEN` starts 1; `AND UNLOCK` starts 2; `OPEN HOME -> KEY Y` starts 3.
 
 ## home-searching
 
@@ -54,11 +67,11 @@ JOY PRESS: ACCESS
 KEY X: HELP
 ```
 
-Shown whenever HOME is entered while at least one mouse is saved and no mouse is connected. Entering this screen automatically starts a bounded saved-device search.
+Shown whenever HOME is entered while at least one Mouse is saved and no Mouse is connected. Entering it starts an **8-second** saved-device search automatically.
 
-The first saved mouse that successfully reaches ready state becomes the sole connected mouse and the search stops.
+The first saved Mouse that reaches ready state becomes the sole connected Mouse and HOME immediately becomes `home-connected`. If the search expires, HOME becomes `home-retry`.
 
-If the previously connected mouse is powered off or otherwise disconnects, the product returns to this same HOME search flow automatically.
+`KEY B` cancels the current search and leaves the HOME family in `home-retry`; it does not delete a saved record.
 
 ## home-searching-help
 
@@ -74,6 +87,8 @@ THIS SCREEN.
 ANY KEY: BACK
 ```
 
+Any HAT control returns to `home-searching` and is consumed.
+
 ## home-retry
 
 ```text
@@ -88,9 +103,7 @@ JOY PRESS: ACCESS
 KEY X: HELP
 ```
 
-Shown after a bounded saved-device search expires without any saved mouse successfully connecting.
-
-`KEY A: RETRY SEARCH` starts a new saved-device search.
+Shown after saved search expires or is canceled. `KEY A` starts a new 8-second saved search and enters `home-searching`.
 
 ## home-retry-help
 
@@ -120,25 +133,33 @@ KEY X: HELP
 KEY Y: LOCK
 ```
 
-Entering Pair New is a live-connection replacement operation. If a mouse is connected, the product first releases its held output and disconnects it cleanly while keeping it saved. Then Pair New searches for an unsaved mouse.
+`PAIR NEW` runs for **15 seconds** and searches only for an unsaved BLE HOGP Mouse.
 
-If several unsaved candidates are waiting, only the first valid candidate is accepted. When successful, that mouse becomes the sole connected mouse and the search stops.
+If one Mouse is already connected, that Mouse remains the sole authoritative live Mouse and continues forwarding input while the new candidate is discovered and qualified. A saved candidate is ignored for Pair New acceptance and the same Pair New window continues.
 
-If Pair New fails or is canceled, the old mouse remains saved but is not silently reconnected inside this screen. Returning to HOME with no connection starts `home-searching` automatically.
+When one unsaved candidate has been fully qualified as replacement-ready, the product performs one atomic handoff: stop old-session input, release all held Mouse/Escape output, disconnect/clear the old live session, persist/confirm the new Mouse as required, then promote the candidate as the sole ready Mouse. There is never more than one authoritative/ready Mouse.
+
+If Pair New is canceled or times out before handoff, the current Mouse remains connected and unchanged. If it was manually unplugged during the search, no connection is fabricated; returning to HOME invokes the normal HOME resolver.
+
+`KEY B` cancels Pair New and returns through the HOME resolver. `KEY X` opens `help-pair-new`. `KEY Y` locks presentation without stopping the current Mouse or the Pair New transaction.
 
 ## help-pair-new
 
 ```text
 PAIR NEW DEVICE HELP
-IF YOU'D LIKE TO TRY
-CONNECTING A DEVICE
-THAT ALREADY HAS A
-SAVED DEVICE, SIMPLY
-RETURN TO THE
-PREVIOUS SCREEN.
+TO CONNECT A SAVED
+DEVICE, FIRST UNPLUG
+CURRENTLY CONNECTED
+MOUSE AND PRESS THE
+KEY B TO BACK UNTIL
+SEARCHING APPEARS.
 
 ANY KEY: BACK
 ```
+
+This text is literal. `ANY KEY: BACK` returns to `pair-new` and consumes the interaction.
+
+The instruction is consistent with the connection model: Pair New does not select already-saved Mice. To make the normal saved-device search eligible, the user disconnects the current Mouse and navigates back until HOME resolves to `home-searching`.
 
 ## retry-pair-new
 
@@ -154,21 +175,25 @@ KEY X: HELP
 KEY Y: LOCK
 ```
 
-Returning to the saved HOME flow with no connected mouse causes `home-searching` to start automatically.
+Shown after the 15-second Pair New window expires without a new candidate. If the original Mouse stayed connected, it is still the current Mouse.
+
+`KEY A` starts another Pair New window. `KEY B` leaves Pair New through the HOME resolver: with a current Mouse it goes to `home-connected`; after the user has unplugged the current Mouse it goes to `home-searching`, which immediately starts saved search. `KEY X` opens `help-retry-pair-new`. `KEY Y` locks presentation.
 
 ## help-retry-pair-new
 
 ```text
 DEVICE NOT FOUND HELP
-THE MATCHING ATTEMPT
-TOOK PLACE ONLY FOR
-DEVICES NOT SAVED IN
-THE PREFERENCES, BUT
-NOT FOR DEVICES
-ALREADY SAVED.
+TO CONNECT A SAVED
+DEVICE, FIRST UNPLUG
+CURRENTLY CONNECTED
+MOUSE AND PRESS THE
+KEY B TO BACK UNTIL
+SEARCHING APPEARS.
 
 ANY KEY: BACK
 ```
+
+This text is literal. `ANY KEY: BACK` returns to `retry-pair-new` and consumes the interaction.
 
 ## home-connected
 
@@ -184,16 +209,16 @@ JOY PRESS: ACCESS
 KEY X: HELP TO REMOVE
 ```
 
-Line 2 is always the name of the single connected mouse. The remap summary belongs to that same mouse.
+Line 2 is the display name of the sole connected Mouse. Long names are projected as the first 21 renderer-supported characters; storage retains the complete normalized name. If no usable name is available, display `UNKNOWN MOUSE`.
 
-Profile summary values are currently:
+Profile summary values are exactly:
 
 - `NO REMAP PASSTHROUGH`
 - `REMAPPED TO STANDARD`
 - `REMAPPED TO ESCAPE`
 - `REMAPPED TO CUSTOM`
 
-There is no multi-device count form and no profile-target ambiguity because concurrent mouse connections are not allowed.
+The first option opens `remapper-options` for this Mouse. `SAVED DEVICES` and `LEARN THE KEYS` open their respective screens. If the live Mouse disconnects while this HOME is visible, HOME immediately resolves to `home-searching` and starts the 8-second saved search.
 
 ## help-home-connected
 
@@ -214,7 +239,7 @@ ANY KEY: BACK
 ```text
 MOUSE OPTIONS
  PASSTHROUGH
- DEFAULT REMAP
+ STANDARD REMAP
  ESCAPE REMAP
  CUSTOM REMAP
 
@@ -223,9 +248,7 @@ JOY LEFT: BACK
 KEY X: HELP
 ```
 
-All remapper actions target the single currently connected mouse.
-
-`DEFAULT REMAP` is the menu label for the profile whose dedicated pages currently use `STANDARD REMAP`.
+`STANDARD REMAP` is the canonical visible name; historical `DEFAULT REMAP` is an alias only. Current confirmed profile is cyan when not selected and white while selected. `JOY LEFT` returns one logical level to `home-connected`.
 
 ## help-remapper-options
 
@@ -255,6 +278,8 @@ KEY B: BACK
 KEY Y: LOCK
 ```
 
+`KEY B` returns to `remapper-options`; `KEY Y` locks.
+
 ## passthrough-not-active
 
 ```text
@@ -268,6 +293,8 @@ KEY A: APPLY
 KEY B: CANCEL
 KEY Y: LOCK
 ```
+
+Apply may enter active state only after runtime and persistence confirmation. Cancel returns to `remapper-options`.
 
 ## standard-not-active
 
@@ -313,6 +340,8 @@ KEY A: APPLY
 KEY B: CANCEL
 ```
 
+There is **no hidden Key Y lock** on this page because it is not displayed.
+
 ## escape-active
 
 ```text
@@ -327,7 +356,9 @@ KEY B: BACK
 JOY LEFT: GO TO HOME
 ```
 
-Escape is emitted through the synthetic USB Keyboard output exception; no Bluetooth Keyboard is involved.
+`KEY B` returns to `remapper-options`. `JOY LEFT: GO TO HOME` is an intentional new-screen exception to the inherited one-level Back rule and invokes the HOME resolver directly. There is no hidden lock control.
+
+Escape is emitted through the fixed synthetic USB Keyboard output exception; no Bluetooth Keyboard is involved.
 
 ## custom-edit
 
@@ -343,7 +374,7 @@ JOY PRESS: ACCESS
 KEY A: APPLY CUSTOM
 ```
 
-The five mapping rows are dynamic draft values for the single connected mouse's Custom profile selection. The Custom template itself remains global unless explicitly changed by the product contract.
+The five mapping rows show the live Custom draft. Up/Down select rows, Joy Press opens the corresponding source editor, and Key A requests full Custom apply. Full success is visible only after runtime + persistence confirmation. There is no hidden Lock control.
 
 ## left
 
@@ -415,6 +446,8 @@ BACKWARD WILL BECOME
 KEY A: APPLY AND BACK
 ```
 
+On each source editor, Up/Down selects the target with wrap. `KEY A` persists the accepted draft choice and returns to `custom-edit`, which immediately reflects it. Controls not displayed are not inherited as hidden actions.
+
 ## saved-devices
 
 Example:
@@ -431,7 +464,13 @@ JOY PRESS: ACCESS
 KEY B: BACK
 ```
 
-One saved mouse is shown per page. If the page represents the single currently connected mouse, **its name on line 2 is cyan**. At most one page can have a cyan connected name.
+One saved Mouse is shown per page. The connected Mouse name on line 2 is cyan; all other names use ordinary body color. At most one page can be connected/cyan.
+
+Status text is exactly `STATUS: CONNECTED` for the current ready Mouse and `STATUS: DISCONNECTED` for every saved Mouse without the live session.
+
+Profile values are `PASSTHROUGH`, `STANDARD`, `ESCAPE`, or `CUSTOM`. `JOY RIGHT/LEFT` wraps pages. `JOY PRESS` on `REMOVE DEVICE` opens `remove-this`. `KEY B` invokes HOME resolver.
+
+Name presentation follows the same 21-character first-character policy as HOME, with fallback `UNKNOWN MOUSE`.
 
 ## remove-this
 
@@ -447,9 +486,9 @@ KEY B: CANCEL
 KEY X: HELP
 ```
 
-The mouse name is dynamic.
+If the target is live, removal stops new input, releases held output and disconnects it before the removal commit. Successful removal deletes product association and matching Bluetooth credential relationship transactionally/recoverably.
 
-If the removed mouse is the connected mouse, its held output is released and its live session is closed before removal commits.
+If it was the last saved Mouse, successful removal enters `searching-first` and first search. Otherwise return to a valid Saved Devices page. `KEY B` cancels back to that Saved Devices page. `KEY X` opens help.
 
 ## help-remove-this
 
@@ -479,18 +518,10 @@ LOCK SCREEN    KEY B
   OPEN HOME -> KEY Y
 ```
 
-This page is never the boot root. Coordinates follow the new layout: `JOY UP` column 8; three `JOY` labels 3/10/17; `LEFT`/`PRESS`/`RIGHT` 3/9/16; `JOY DOWN` 7; right-side `KEY A/B/X` starts column 16; `LOCK SCREEN` begins column 1; `AND UNLOCK` begins column 2; `OPEN HOME -> KEY Y` begins column 3.
+This screen is never a boot root. Its instructional controls are identical to `first-mouse-connected`: joystick and Key A give visual feedback only; Key B locks; while this page is locked, Key X unlocks and is consumed; Key Y invokes HOME resolver.
 
-Opening HOME from Learn follows the same root resolver: if a mouse is connected, show `home-connected`; if saved mice exist but none is connected, enter `home-searching` and start saved search; if none are saved, enter `searching-first`.
+Frozen columns: `JOY UP` 8; three `JOY` 3/10/17; `LEFT`/`PRESS`/`RIGHT` 3/9/16; `JOY DOWN` 7; right-side `KEY A/B/X` 16; `LOCK SCREEN` 1; `AND UNLOCK` 2; `OPEN HOME -> KEY Y` 3.
 
 ## Screens intentionally absent
 
-There are no product screens for:
-
-- Pair Keyboard
-- Keyboard Saved
-- Pair Composite
-- Composite Saved
-- Other Devices
-
-Escape output is not a reason to restore any of those screens.
+There are no product screens for Pair Keyboard, Keyboard Saved, Pair Composite, Composite Saved or Other Devices. There is no multi-connected Mouse count/focus screen. Synthetic Escape is not permission to restore Bluetooth Keyboard/Composite product scope.
