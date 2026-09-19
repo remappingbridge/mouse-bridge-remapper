@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Mouse Bridge Remapper is a standalone Raspberry Pi Pico 2 W appliance that pairs Bluetooth mice, forwards their input to a host over USB and remaps mouse buttons locally through the Waveshare Pico-LCD-1.3 HAT.
+Mouse Bridge Remapper is a standalone Raspberry Pi Pico 2 W appliance that pairs Bluetooth mice, forwards one connected mouse to a host over USB and remaps mouse buttons locally through the Waveshare Pico-LCD-1.3 HAT.
 
 The host must not require companion software for normal operation.
 
@@ -14,13 +14,38 @@ The product does not offer Bluetooth Keyboard or Bluetooth Composite pairing flo
 
 A mouse-capable BLE HOGP peer is accepted only after its HID capabilities are classified as compatible with the Mouse role. Transport-specific report layouts never become application-domain types.
 
-## Multiple connected mice
+## Saved mice and live connection
 
-The runtime supports a set of connected mouse sessions, not one global active mouse.
+The product may persist multiple saved mice.
 
-Product/UI count range is 0 through 999. If exactly one mouse is connected, HOME displays that mouse's name. If two or more are connected, HOME displays `<N> DEVICES CONNECTED`.
+The live runtime capacity is exactly:
 
-The firmware must prevent the displayed count from exceeding 999. Physical support for a specific number of concurrent BLE sessions must be established separately by evidence.
+```text
+0 or 1 connected mouse
+```
+
+A second mouse may not become ready while another mouse remains connected.
+
+The connected mouse, if present, is the sole source of live Mouse input and the sole target of HOME remapper actions.
+
+## HOME resolution
+
+HOME is determined by saved state and live connection state:
+
+```text
+no saved mice
+  -> searching-first
+
+saved mice exist + connected mouse exists
+  -> home-connected
+
+saved mice exist + no connected mouse
+  -> home-searching and automatically start bounded saved-device search
+```
+
+If that bounded saved-device search expires without a successful connection, HOME becomes `home-retry` / `DEVICE NOT FOUND`.
+
+This same rule applies after startup, after returning to HOME, and after the connected mouse disconnects or is powered off.
 
 ## Search policy
 
@@ -30,25 +55,35 @@ Search for the first valid mouse continues until one is accepted.
 
 If more than one unsaved mouse is waiting to pair, the first valid candidate wins and the search stops.
 
-### Saved mice at startup
+### Saved mice
 
-If saved mice exist and no mouse is connected, perform a bounded saved-device search/reconnect attempt.
+Whenever HOME is entered with saved mice and no live connection, perform a bounded saved-device search.
 
-As soon as one saved mouse becomes ready, that automatic search stops. Do not continue automatically to connect additional mice.
+The first saved mouse that successfully reaches ready state wins and the search stops.
 
-### Additional mice
+If none is found before timeout, publish `DEVICE NOT FOUND`.
 
-Additional mice are connected only by explicit user action through Pair New or another explicitly documented manual connection action.
+### Pair New
 
-Each Pair New action accepts at most one new mouse. If several unsaved mice are waiting, the first valid candidate wins and the search stops.
+Pair New is a manual request for one unsaved mouse and a replacement of any current live connection.
 
-## Saved devices
+If a mouse is connected when Pair New begins:
+
+1. stop accepting new input from its session;
+2. release held Mouse/Escape state;
+3. disconnect it cleanly;
+4. retain its saved product record and bond;
+5. start Pair New discovery.
+
+The first valid unsaved candidate that completes acceptance becomes the sole connected mouse and Pair New stops.
+
+If Pair New fails or is canceled, previously saved records remain intact. The old mouse remains saved but disconnected. Returning to HOME with no connection starts the ordinary saved-device search automatically.
+
+## Saved Devices
 
 Saved and connected are distinct states.
 
-A saved mouse persists across power loss. A saved mouse may be disconnected. Multiple saved mice may be connected simultaneously.
-
-Saved Devices shows one mouse per page. A connected mouse's name on line 2 is cyan.
+Each saved mouse has its own page. At most one page can show `STATUS: CONNECTED` and a cyan mouse name because only one live mouse exists.
 
 ## Profiles
 
@@ -63,11 +98,13 @@ A newly saved mouse starts in Passthrough unless a later documented rule changes
 
 Movement, vertical wheel and horizontal pan are never remapped by these button profiles.
 
+The currently connected mouse's confirmed profile is the one used by HOME and remapper actions.
+
 ## Escape exception
 
 Escape Remap and Custom target Escape are retained.
 
-The product therefore exposes enough USB HID Keyboard capability to emit standard Escape from a mouse-remap source. This is output-only product infrastructure; it does not create a Bluetooth keyboard role.
+The product therefore exposes enough USB HID Keyboard capability to emit standard Escape from a mouse-remap source. This is output-only infrastructure and does not create a Bluetooth Keyboard role.
 
 ## Custom template
 
@@ -85,6 +122,8 @@ At minimum, product persistence must safely preserve:
 
 Bluetooth credentials are not the same record as product configuration.
 
+Transient live session state is never persisted as if it were a valid connection after reboot.
+
 ## Logitech behavior
 
 Logitech-specific HID++ behavior is automatic and capability-driven. It is never exposed as a profile or transport selection.
@@ -99,12 +138,6 @@ The exact project-specific VID/PID/manufacturer/product strings remain an explic
 
 ## Debug policy
 
-Production firmware must not depend on:
-
-- diagnostic USB CDC;
-- debug-only USB product identities;
-- UART logs for normal acceptance;
-- debug-only LCD screens;
-- parallel user-facing debug firmware personalities.
+Production firmware must not depend on diagnostic USB CDC, debug-only USB identities, UART logs for normal acceptance, debug-only LCD screens or parallel user-facing debug firmware personalities.
 
 Host tests, CI compiler logs and internal development instrumentation are allowed when they do not change the production USB/UI contract.
