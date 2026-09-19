@@ -1,52 +1,45 @@
 # Mouse session domain
 
-## Core simplification
+Status: **FROZEN BY MBR-00**.
 
-Mouse Bridge Remapper supports many **saved** mice but exactly one **live connected mouse**.
+## Core model
 
-The runtime therefore owns one optional connection slot instead of a set of simultaneous sessions:
+Mouse Bridge Remapper may save many mice but has at most one **authoritative ready Mouse**.
 
 ```text
-ConnectedMouseSlot = None | MouseSession
+AuthoritativeMouseSlot = None | MouseSession
+ReplacementCandidateSlot = None | CandidateSession
 ```
 
-This is an intentional product constraint, not merely an implementation limitation.
+The candidate slot is used only during explicit Pair New qualification. A candidate is not product-connected/authoritative and cannot forward authoritative USB Mouse input before promotion.
 
-## Identity model
-
-Persistent identity and transient Bluetooth state remain separate:
+## Identity
 
 ```text
 MouseId
-  persistent identity of a saved mouse
+  persistent identity of a saved Mouse
 
 MouseSessionId
-  MouseId + session generation/token
+  MouseId + connection generation/token
 ```
 
-Raw HCI/HIDS handles remain adapter-private. The generation/token prevents a late callback from an old disconnected session from mutating a newer session that reused a low-level handle.
+Raw HCI/HIDS handles stay adapter-private. Generation prevents late callbacks from old/replaced sessions mutating newer state.
 
-## Saved mouse
-
-Conceptual persistent record:
+## Saved Mouse
 
 ```text
 SavedMouse {
   MouseId id;
-  DisplayName name;
-  ProfileKind profile;
+  DisplayName full_name;
+  ProfileKind profile;  // PASSTHROUGH | STANDARD | ESCAPE | CUSTOM
   CapabilitySummary capabilities;
   VendorMetadata vendor;
 }
 ```
 
-There may be multiple `SavedMouse` records.
+There may be multiple saved records. There is no Keyboard/Composite product-device union.
 
-There is no Keyboard/Composite device-type union in the product domain.
-
-## Live mouse session
-
-Conceptual live state:
+## Authoritative session
 
 ```text
 MouseSession {
@@ -59,82 +52,77 @@ MouseSession {
 }
 ```
 
-At most one such session may be in `ready` state.
+UI `CONNECTED` means this slot contains a current authoritative session in ready state. Recent movement is never a connection proxy.
 
-`connected` in UI terms means that the single live slot contains a current session that reached the product's ready state. Recent motion is never used as a connection proxy.
+## Replacement candidate
 
-## Canonical input boundary
+A Pair New candidate may have discovery/security/HIDS state sufficient for qualification. It is explicitly non-authoritative until handoff.
 
-BLE adapters emit canonical events only:
+It must not:
+
+- be counted as the connected Mouse;
+- drive HOME connected name/profile;
+- emit authoritative Mouse output;
+- mutate the current Mouse's profile/registry entry.
+
+## Canonical boundary
+
+BLE adapter outputs canonical events only for authoritative forwarding:
 
 ```text
 ButtonDown(LEFT|RIGHT|MIDDLE|FORWARD|BACKWARD)
-ButtonUp(LEFT|RIGHT|MIDDLE|FORWARD|BACKWARD)
-Move(dx, dy)
+ButtonUp(...)
+Move(dx,dy)
 Wheel(delta)
 Pan(delta)
 SessionGone(session_id)
 ```
 
-Report IDs, offsets, transport framing and raw HIDS structures are resolved before this boundary.
+Report IDs, offsets/framing and raw HIDS structures are adapter-private. Malformed/truncated reports are rejected.
 
-Malformed or truncated reports are rejected without corrupting held output state.
+## Held state
 
-## Held-state model
+Cross-Mouse refcounting is unnecessary because only one Mouse is authoritative.
 
-Because only one mouse may be live, cross-device reference counting is unnecessary.
+Within the authoritative session, explicit ownership/refcounts are still required for Left/Right/Middle/Forward/Backward/Escape because two physical buttons may map to the same target.
 
-The remap/output layer still tracks explicit held state for:
-
-- Left;
-- Right;
-- Middle;
-- Forward;
-- Backward;
-- synthetic Escape.
-
-Duplicate press/release transitions are idempotent.
-
-On disconnect, replacement, removal, parser failure, queue continuity loss or a profile transition that invalidates existing mapping state, all held output attributable to the current session is released before the session is discarded.
+Duplicate transitions are idempotent. Disconnect, handoff, removal, parser/queue continuity loss and profile transition release invalidated held output before session disposal/change.
 
 ## Relative events
 
-X/Y movement, vertical wheel and horizontal pan are transient.
+X/Y, vertical wheel and pan are transient, bounded and USB-backpressure-aware. No cross-Mouse merging exists.
 
-They are accumulated in bounded signed totals as needed for USB backpressure and split into report-sized chunks. A chunk is consumed only when the USB report is accepted for submission according to the TinyUSB contract.
+## State transitions
 
-No multi-mouse merging is required.
-
-## Session replacement
-
-There is exactly one supported live-session transition:
+Ordinary transitions:
 
 ```text
-None -> Mouse A
-Mouse A -> None
-Mouse A -> None -> Mouse B
+None -> Mouse A authoritative
+Mouse A authoritative -> None
 ```
 
-The last form is used by Pair New replacement. Direct overlap `Mouse A + Mouse B` is forbidden.
+Pair New:
 
-A replacement transaction must complete release/disconnect cleanup of A before B becomes authoritative.
+```text
+Mouse A authoritative
+  + Candidate B qualifying (non-authoritative)
+  -> B replacement-ready
+  -> freeze/release/disconnect A
+  -> promote B authoritative
+```
+
+The temporary existence of candidate B is not two connected product mice. Invariant:
+
+```text
+authoritative_ready_mouse_count <= 1
+```
+
+If Pair New fails/cancels before handoff, Candidate B is discarded and Mouse A remains authoritative.
+
+If Mouse A is manually unplugged while Pair New is active, A follows ordinary disconnect cleanup; candidate search remains new-only until it succeeds/expires/cancels.
 
 ## Saved-state independence
 
-Disconnecting a live mouse does not delete its `SavedMouse` record.
+Disconnect/handoff never implies deletion. The old Mouse keeps its saved record/profile/bond unless the user explicitly removes it.
 
-Therefore:
-
-- a powered-off mouse can be rediscovered by the saved-device HOME search;
-- Pair New may disconnect the current mouse while leaving it saved;
-- removal is the only user action that deletes the saved product relationship and associated credential state.
-
-## Invariant
-
-At every externally observable instant:
-
-```text
-ready_live_mouse_count <= 1
-```
-
-Any code path that would make a second mouse ready before the first live session has been released and closed is an architecture violation.
+Removal is the only product action that deletes the saved relationship and coordinates matching credential deletion.
