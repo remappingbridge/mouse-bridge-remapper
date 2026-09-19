@@ -36,6 +36,8 @@ custom_draft_dirty
 
 Transient connection handles, HIDS client pointers, queue state and BTstack internal structures are never persisted as product data.
 
+The product may store many saved mice even though only one can be live at a time.
+
 ## Power-loss safety
 
 Use two alternating flash generations/slots or an equivalently proven strategy:
@@ -51,15 +53,15 @@ No valid product record means safe defaults rather than undefined state.
 
 ## Boot reconstruction order
 
-Before ordinary mouse input becomes authoritative, boot reconstructs the product state needed by:
+Before live mouse input becomes authoritative, boot reconstructs:
 
 - saved-device registry;
 - each saved mouse's confirmed profile;
 - Custom template and unapplied draft state;
-- UI profile projection;
+- UI profile projection data;
 - Logitech vendor behavior requirements.
 
-Only after storage validation may the coordinator decide whether first-mouse search or saved-device search is appropriate.
+After storage validation, HOME resolution decides whether the product needs first-mouse search, saved-device search or can show the connected state once a session is ready.
 
 ## Saving a newly paired mouse
 
@@ -84,27 +86,42 @@ Profile Apply is not complete until the new confirmed profile has been persisted
 
 The accepted G06 behavior of preserving a Custom draft independently from the last actually applied profile remains the inherited default: an accepted per-source draft may survive reboot as dirty/unapplied without falsely becoming the active Custom profile.
 
+## Pair New and saved-state preservation
+
+Pair New may disconnect the currently connected mouse, but **disconnect is not deletion**.
+
+The replaced mouse keeps:
+
+- its `SavedMouse` record;
+- confirmed profile;
+- Custom relationship;
+- Bluetooth bond/credentials.
+
+If the new pairing fails, that previous mouse remains eligible for the ordinary saved-device search when HOME is entered without a live connection.
+
 ## Remove transaction
 
-Removing a mouse coordinates all product/security state for that MouseId.
+Removing a mouse coordinates all product/security state for that `MouseId`.
 
 Required semantic sequence:
 
-1. mark the MouseId as being removed so new source events cannot become authoritative;
-2. release all held Mouse/Escape ownership belonging to its live session(s);
-3. disconnect its current live session if connected;
+1. if this is the current live mouse, stop accepting new events;
+2. release all held Mouse/Escape output for the live session;
+3. disconnect and clear the live session if this mouse is connected;
 4. remove product registry/profile association;
 5. remove matching Bluetooth credentials/security relationship;
 6. persist and verify the new product generation;
 7. publish `RemoveConfirmed` to UI.
 
-Other mice continue operating.
+If the removed mouse is not currently connected, the live session of another saved mouse is not disturbed.
 
 ## Remove destination
 
 If removal leaves zero saved mice, transition to first-mouse onboarding and begin automatic first-mouse search.
 
 If saved mice remain, return to Saved Devices on a valid remaining page.
+
+If removal also cleared the only live session, then the next HOME entry follows the ordinary rule: saved mice + no connection -> `home-searching` with automatic bounded saved search.
 
 ## Failure model
 
