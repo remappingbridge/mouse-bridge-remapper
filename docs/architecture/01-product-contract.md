@@ -1,143 +1,147 @@
 # Product contract
 
+Status: **FROZEN BY MBR-00**.
+
 ## Purpose
 
-Mouse Bridge Remapper is a standalone Raspberry Pi Pico 2 W appliance that pairs Bluetooth mice, forwards one connected mouse to a host over USB and remaps mouse buttons locally through the Waveshare Pico-LCD-1.3 HAT.
+Mouse Bridge Remapper is a standalone Raspberry Pi Pico 2 W appliance that pairs BLE HOGP mice, forwards one authoritative connected Mouse to a host over USB, and remaps mouse buttons locally through the Waveshare Pico-LCD-1.3 HAT.
 
-The host must not require companion software for normal operation.
+The host requires no companion software for normal operation.
 
-## Product device type
+## Bluetooth product scope
 
-The only Bluetooth product device type is **Mouse**.
+The only Bluetooth product device type is **Mouse**, and the production Mouse transport is **BLE HOGP only**.
 
-The product does not offer Bluetooth Keyboard or Bluetooth Composite pairing flows.
+Excluded unless product documentation is changed first:
 
-A mouse-capable BLE HOGP peer is accepted only after its HID capabilities are classified as compatible with the Mouse role. Transport-specific report layouts never become application-domain types.
+- Bluetooth Classic Mouse;
+- Bluetooth Keyboard discovery/pairing/input;
+- Bluetooth Composite Mouse+Keyboard as a product type;
+- Keyboard/Composite saved-device registries or UI flows.
 
-## Saved mice and live connection
+A HOGP peer is accepted only after HID capabilities are classified as compatible with the Mouse role.
 
-The product may persist multiple saved mice.
+## Saved mice and live capacity
 
-The live runtime capacity is exactly:
+Multiple Mouse records may be saved. Runtime product truth is:
 
 ```text
-0 or 1 connected mouse
+saved_mice = 0..N
+live_authoritative_mouse = None | one MouseSession
 ```
 
-A second mouse may not become ready while another mouse remains connected.
-
-The connected mouse, if present, is the sole source of live Mouse input and the sole target of HOME remapper actions.
+A replacement candidate may temporarily have transport state while being qualified, but product-visible ready/authoritative count never exceeds one.
 
 ## HOME resolution
-
-HOME is determined by saved state and live connection state:
 
 ```text
 no saved mice
   -> searching-first
 
-saved mice exist + connected mouse exists
+saved mice + live Mouse
   -> home-connected
 
-saved mice exist + no connected mouse
-  -> home-searching and automatically start bounded saved-device search
+saved mice + no live Mouse
+  -> home-searching + automatic 8-second saved search
 ```
 
-If that bounded saved-device search expires without a successful connection, HOME becomes `home-retry` / `DEVICE NOT FOUND`.
+The first saved Mouse reaching ready state wins. Search expiry or cancellation leads to `home-retry` / `DEVICE NOT FOUND`.
 
-This same rule applies after startup, after returning to HOME, and after the connected mouse disconnects or is powered off.
+When the live Mouse disconnects, held output is released and connection truth is cleared. If HOME is visible, this resolver runs immediately; otherwise it runs when HOME is next accessed.
 
-## Search policy
+## First Mouse search
 
-### No saved mouse
+With no saved Mouse, search is logically indefinite through restartable 8-second discovery cycles. The first valid unsaved BLE HOGP Mouse accepted becomes saved and live; all other candidates from that transaction are ignored/canceled.
 
-Search for the first valid mouse continues until one is accepted.
+## Pair New
 
-If more than one unsaved mouse is waiting to pair, the first valid candidate wins and the search stops.
+Pair New is a **15-second new-only replacement search**.
 
-### Saved mice
+If a Mouse is already live, it remains the authoritative live Mouse and continues forwarding input during search. An already-saved candidate is not eligible for Pair New and is ignored for acceptance while the same search window continues.
 
-Whenever HOME is entered with saved mice and no live connection, perform a bounded saved-device search.
+When an unsaved candidate reaches replacement-ready state, perform an ordered handoff:
 
-The first saved mouse that successfully reaches ready state wins and the search stops.
+1. stop new input from the old live session;
+2. release all held Mouse/Escape output belonging to it;
+3. disconnect/clear the old live session while retaining its saved record and bond;
+4. persist/confirm the new Mouse as required;
+5. promote the new candidate as the sole authoritative ready Mouse;
+6. stop Pair New.
 
-If none is found before timeout, publish `DEVICE NOT FOUND`.
+If Pair New times out or is canceled before handoff, the original live Mouse remains connected and unchanged.
 
-### Pair New
-
-Pair New is a manual request for one unsaved mouse and a replacement of any current live connection.
-
-If a mouse is connected when Pair New begins:
-
-1. stop accepting new input from its session;
-2. release held Mouse/Escape state;
-3. disconnect it cleanly;
-4. retain its saved product record and bond;
-5. start Pair New discovery.
-
-The first valid unsaved candidate that completes acceptance becomes the sole connected mouse and Pair New stops.
-
-If Pair New fails or is canceled, previously saved records remain intact. The old mouse remains saved but disconnected. Returning to HOME with no connection starts the ordinary saved-device search automatically.
+To reconnect a saved Mouse instead, the documented Help instructs the user to turn off/unplug the current Mouse and navigate Back until HOME enters `SEARCHING SAVED MOUSE`.
 
 ## Saved Devices
 
-Saved and connected are distinct states.
+Each saved Mouse has one page.
 
-Each saved mouse has its own page. At most one page can show `STATUS: CONNECTED` and a cyan mouse name because only one live mouse exists.
+- live Mouse: `STATUS: CONNECTED`, name cyan;
+- every other saved Mouse: `STATUS: DISCONNECTED`, name ordinary body color.
+
+At most one page is connected/cyan.
+
+Names are stored in full normalized form within schema limits. Display uses the first 21 renderer-supported characters, with no ellipsis or scrolling. Empty/unusable name falls back to `UNKNOWN MOUSE`.
 
 ## Profiles
 
-Every saved mouse has a confirmed profile kind:
+Canonical profile kinds and visible vocabulary:
 
-- Passthrough;
-- Default/Standard Remap;
-- Escape Remap;
-- Custom Remap.
+- `PASSTHROUGH` / `PASSTHROUGH`;
+- `STANDARD` / `STANDARD REMAP`;
+- `ESCAPE` / `ESCAPE REMAP`;
+- `CUSTOM` / `CUSTOM REMAP`.
 
-A newly saved mouse starts in Passthrough unless a later documented rule changes this.
+Historical `DEFAULT REMAP` maps to `STANDARD` and is not canonical new UI text.
 
-Movement, vertical wheel and horizontal pan are never remapped by these button profiles.
-
-The currently connected mouse's confirmed profile is the one used by HOME and remapper actions.
+A newly saved Mouse begins in Passthrough. Movement, wheel and horizontal pan are never remapped by button profiles.
 
 ## Escape exception
 
-Escape Remap and Custom target Escape are retained.
+Escape remains supported as output from Mouse remapping.
 
-The product therefore exposes enough USB HID Keyboard capability to emit standard Escape from a mouse-remap source. This is output-only infrastructure and does not create a Bluetooth Keyboard role.
+The fixed USB device therefore includes a minimal HID Keyboard output interface capable of standard Escape press/release. This is output-only infrastructure and does not authorize any Bluetooth Keyboard role.
 
 ## Custom template
 
-The inherited contract has one persistent global Custom template containing five source-button mappings. Saved mice using Custom reference that template rather than owning private mapping tables unless this documentation is explicitly changed.
+One persistent global Custom template contains the five source-button mappings. Each saved Mouse stores only its confirmed profile kind. A saved Mouse using Custom uses the current global Custom template when connected.
+
+Custom draft and dirty/unapplied state remain persistent separately from the last confirmed active profile.
 
 ## Persistence
 
-At minimum, product persistence must safely preserve:
+Product state safely preserves at least:
 
-- saved mouse identities and display names;
-- each saved mouse's confirmed profile kind;
+- saved Mouse identity and full normalized name;
+- confirmed per-Mouse profile kind;
 - global Custom template;
-- Custom draft and dirty/unapplied state where inherited behavior requires it;
-- vendor/capability metadata needed for safe reconnect/remap behavior.
+- Custom draft/dirty state;
+- required capability/vendor metadata.
 
-Bluetooth credentials are not the same record as product configuration.
+Product state is integrity protected and power-loss safe through alternating generations or an equivalently proven mechanism. BTstack credentials are a separate ownership domain.
 
-Transient live session state is never persisted as if it were a valid connection after reboot.
+## Logitech HID++
 
-## Logitech behavior
+HID++ behavior is automatic/capability-driven. Preserve true Forward down/hold/up when diversion is needed. Unsupported peers fall back safely to ordinary HOGP.
 
-Logitech-specific HID++ behavior is automatic and capability-driven. It is never exposed as a profile or transport selection.
+## Fixed USB identity
 
-When supported and needed, it may preserve true Forward down/hold/up behavior under remapping. Unsupported mice must fail safe to normal HID behavior.
+The MBR-00 USB identity is:
 
-## USB identity
+- VID: `0xCAFE`;
+- PID: `0x4011`;
+- bcdDevice: `0x0100`;
+- manufacturer: `tiagooliveirajs`;
+- product: `Mouse Bridge Remapper`;
+- serial string: none (`iSerialNumber = 0`);
+- HID interface 0: Mouse;
+- HID interface 1: minimal Keyboard output for synthetic Escape;
+- no CDC, MSC, MIDI or vendor-debug interface.
 
-USB identity is firmware-owned and fixed from boot. Bluetooth connections, pairing, profile changes, lock/unlock and reconnect do not trigger forced USB re-enumeration.
+`0xCAFE` is retained as the project's development/local USB VID convention; this contract does not claim an allocated USB-IF vendor identity for commercial distribution.
 
-The exact project-specific VID/PID/manufacturer/product strings remain an explicit product decision. The descriptor shape must contain Mouse output and the minimal Keyboard output capability required for synthetic Escape, with no diagnostic CDC interface.
+USB identity exists from boot and never changes because of Bluetooth, search, profile, lock, removal or reconnect state. No forced Bluetooth-driven USB re-enumeration is allowed.
 
 ## Debug policy
 
-Production firmware must not depend on diagnostic USB CDC, debug-only USB identities, UART logs for normal acceptance, debug-only LCD screens or parallel user-facing debug firmware personalities.
-
-Host tests, CI compiler logs and internal development instrumentation are allowed when they do not change the production USB/UI contract.
+Production behavior and acceptance must not depend on USB CDC, UART logging, debug-only USB identities, debug-only LCD pages or parallel debug firmware personalities.
