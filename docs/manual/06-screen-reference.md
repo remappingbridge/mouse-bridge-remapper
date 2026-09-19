@@ -4,6 +4,8 @@ This document is the user-facing screen inventory. Parenthetical annotations use
 
 Unless explicitly stated otherwise, rows must fit the 21-character semantic width.
 
+The product may have many saved mice, but at most one mouse may be connected at any time.
+
 ## searching-first
 
 ```text
@@ -52,7 +54,11 @@ JOY PRESS: ACCESS
 KEY X: HELP
 ```
 
-Shown on startup when saved mice exist but none is ready yet and a bounded saved search is active. Once one saved mouse connects, automatic search stops; the product does not automatically seek a second mouse.
+Shown whenever HOME is entered while at least one mouse is saved and no mouse is connected. Entering this screen automatically starts a bounded saved-device search.
+
+The first saved mouse that successfully reaches ready state becomes the sole connected mouse and the search stops.
+
+If the previously connected mouse is powered off or otherwise disconnects, the product returns to this same HOME search flow automatically.
 
 ## home-searching-help
 
@@ -82,7 +88,9 @@ JOY PRESS: ACCESS
 KEY X: HELP
 ```
 
-Shown after a saved-device search expires without a successful connection.
+Shown after a bounded saved-device search expires without any saved mouse successfully connecting.
+
+`KEY A: RETRY SEARCH` starts a new saved-device search.
 
 ## home-retry-help
 
@@ -112,7 +120,11 @@ KEY X: HELP
 KEY Y: LOCK
 ```
 
-Existing connected mice keep working. If several unsaved candidates are waiting, only the first valid candidate is accepted; the Pair New search then stops.
+Entering Pair New is a live-connection replacement operation. If a mouse is connected, the product first releases its held output and disconnects it cleanly while keeping it saved. Then Pair New searches for an unsaved mouse.
+
+If several unsaved candidates are waiting, only the first valid candidate is accepted. When successful, that mouse becomes the sole connected mouse and the search stops.
+
+If Pair New fails or is canceled, the old mouse remains saved but is not silently reconnected inside this screen. Returning to HOME with no connection starts `home-searching` automatically.
 
 ## help-pair-new
 
@@ -142,6 +154,8 @@ KEY X: HELP
 KEY Y: LOCK
 ```
 
+Returning to the saved HOME flow with no connected mouse causes `home-searching` to start automatically.
+
 ## help-retry-pair-new
 
 ```text
@@ -158,8 +172,6 @@ ANY KEY: BACK
 
 ## home-connected
 
-Exactly one connected mouse:
-
 ```text
 MOUSE CONNECTED
 LOGITECH LIFT
@@ -172,21 +184,7 @@ JOY PRESS: ACCESS
 KEY X: HELP TO REMOVE
 ```
 
-Two or more connected mice replace line 2 with the count:
-
-```text
-MOUSE CONNECTED
-2 DEVICES CONNECTED
- REMAPPED TO ESCAPE
- SAVED DEVICES
- LEARN THE KEYS
-
-JOY UP / DOWN: SELECT
-JOY PRESS: ACCESS
-KEY X: HELP TO REMOVE
-```
-
-Count format is `<N> DEVICES CONNECTED`, from 2 through 999. `999 DEVICES CONNECTED` is the maximum 21-character form.
+Line 2 is always the name of the single connected mouse. The remap summary belongs to that same mouse.
 
 Profile summary values are currently:
 
@@ -195,7 +193,7 @@ Profile summary values are currently:
 - `REMAPPED TO ESCAPE`
 - `REMAPPED TO CUSTOM`
 
-Which individual mouse is the profile-editing target when more than one mouse is connected remains an explicit product decision; implementation must not guess.
+There is no multi-device count form and no profile-target ambiguity because concurrent mouse connections are not allowed.
 
 ## help-home-connected
 
@@ -211,8 +209,6 @@ DEVICE > REMOVE
 ANY KEY: BACK
 ```
 
-The wording of `CURRENTLY CONNECTED MOUSE` requires normalization for the multi-mouse state before final renderer acceptance.
-
 ## remapper-options
 
 ```text
@@ -226,6 +222,8 @@ JOY PRESS: ACCESS
 JOY LEFT: BACK
 KEY X: HELP
 ```
+
+All remapper actions target the single currently connected mouse.
 
 `DEFAULT REMAP` is the menu label for the profile whose dedicated pages currently use `STANDARD REMAP`.
 
@@ -315,8 +313,6 @@ KEY A: APPLY
 KEY B: CANCEL
 ```
 
-`MIDDLE IS FORWARD` normalizes the planning typo `FORWARED` without changing behavior.
-
 ## escape-active
 
 ```text
@@ -347,7 +343,7 @@ JOY PRESS: ACCESS
 KEY A: APPLY CUSTOM
 ```
 
-The five mapping rows are dynamic draft values.
+The five mapping rows are dynamic draft values for the single connected mouse's Custom profile selection. The Custom template itself remains global unless explicitly changed by the product contract.
 
 ## left
 
@@ -435,7 +431,7 @@ JOY PRESS: ACCESS
 KEY B: BACK
 ```
 
-One mouse is shown per page. If the mouse on the page is currently connected, **its name on line 2 is cyan**. Several pages may independently have cyan names when several mice are connected.
+One saved mouse is shown per page. If the page represents the single currently connected mouse, **its name on line 2 is cyan**. At most one page can have a cyan connected name.
 
 ## remove-this
 
@@ -452,6 +448,8 @@ KEY X: HELP
 ```
 
 The mouse name is dynamic.
+
+If the removed mouse is the connected mouse, its held output is released and its live session is closed before removal commits.
 
 ## help-remove-this
 
@@ -482,6 +480,8 @@ LOCK SCREEN    KEY B
 ```
 
 This page is never the boot root. Coordinates follow the new layout: `JOY UP` column 8; three `JOY` labels 3/10/17; `LEFT`/`PRESS`/`RIGHT` 3/9/16; `JOY DOWN` 7; right-side `KEY A/B/X` starts column 16; `LOCK SCREEN` begins column 1; `AND UNLOCK` begins column 2; `OPEN HOME -> KEY Y` begins column 3.
+
+Opening HOME from Learn follows the same root resolver: if a mouse is connected, show `home-connected`; if saved mice exist but none is connected, enter `home-searching` and start saved search; if none are saved, enter `searching-first`.
 
 ## Screens intentionally absent
 
