@@ -1,35 +1,23 @@
 # Remap, Escape and USB contract
 
+Status: **FROZEN BY MBR-00**.
+
 ## Pure remap core
 
-Profiles/remap operate on canonical events and have no dependency on BTstack, TinyUSB, GPIO, SPI or raw BLE report structures.
+Profiles/remap consume canonical Mouse events and do not depend on BTstack, TinyUSB, GPIO, SPI or raw BLE report structures.
 
-Input:
+Outputs are canonical Mouse target events or synthetic `EscapeDown` / `EscapeUp` intent.
 
-- current `MouseId` / `MouseSessionId`;
-- confirmed profile kind;
-- canonical physical Mouse event;
-- global Custom template where applicable.
-
-Output:
-
-- canonical Mouse button/motion target events; or
-- synthetic `EscapeDown` / `EscapeUp` intent.
-
-Only the single current live mouse may feed this pipeline.
-
-## Exact preset mappings
+## Exact mappings
 
 ### Passthrough
-
 - Left→Left
 - Right→Right
 - Middle→Middle
 - Forward→Forward
 - Backward→Backward
 
-### Default / Standard
-
+### Standard
 - Left→Forward
 - Right→Backward
 - Middle→Middle
@@ -37,78 +25,75 @@ Only the single current live mouse may feed this pipeline.
 - Backward→Right
 
 ### Escape
-
 - Left→Escape
 - Right→Backward
 - Middle→Forward
 - Forward→Left
 - Backward→Right
 
-Relative X/Y, wheel and pan are unchanged by all profiles.
+Relative X/Y, wheel and pan remain unchanged.
 
-## Custom
-
+### Custom
 Sources: Left, Right, Middle, Forward, Backward.
 
-Allowed targets: Left, Right, Middle, Escape, Forward, Backward.
+Targets: Left, Right, Middle, Escape, Forward, Backward.
 
-The draft is distinct from the confirmed active template/profile. A per-source Apply-and-Back updates the draft immediately. Full Apply becomes authoritative only after runtime + persistence confirmation.
+Draft edits are persistent separately from confirmed active profile state. Full Apply is authoritative only after runtime + persistence confirmation.
 
-## Escape exception boundary
+## Held ownership within one live Mouse
 
-The project is Mouse-only for Bluetooth input, but Escape remains a standard keyboard key on USB output.
+Even with one authoritative Mouse, held-state ownership is explicit because two physical source buttons can map to the same target.
 
-The architecture therefore permits a narrowly scoped synthetic-keyboard path:
+A target stays down until every current-session source owning it has released. Disconnect, replacement handoff, removal, profile transition or continuity-invalidating failure clears the outgoing session's held ownership.
+
+Synthetic Escape uses the same principle.
+
+## Escape boundary
 
 ```text
 Mouse canonical event
  -> remap
  -> Escape intent
  -> held Escape state
- -> usb_hid Keyboard Escape report
+ -> usb_hid minimal Keyboard report
 ```
 
-There is no reverse or peer input path from a Bluetooth Keyboard.
+No Bluetooth Keyboard input path exists.
 
-The synthetic-keyboard component must expose only the capabilities necessary for the documented remap output contract unless future documentation expands it.
+## Sole USB owner
 
-## USB owner
+`usb_hid` alone owns:
 
-`usb_hid` is the only module allowed to own:
-
-- TinyUSB device descriptors;
-- `tud_task`/device service integration;
+- TinyUSB descriptors/device service;
 - Mouse report construction/submission;
-- Keyboard report construction/submission for synthetic Escape.
+- minimal Keyboard report construction/submission for synthetic Escape.
 
-Bluetooth adapters, remap logic and UI may not call TinyUSB directly.
+No other module calls TinyUSB device/report primitives directly.
 
-## Fixed identity
+## MBR-00 fixed USB identity
 
-The USB descriptor is fixed from boot. Bluetooth connect/disconnect, searching, profile changes, lock/unlock, saved-device operations and reconnect do not force `tud_disconnect()` / `tud_connect()` re-enumeration.
+- VID `0xCAFE`
+- PID `0x4011`
+- bcdDevice `0x0100`
+- manufacturer string `tiagooliveirajs`
+- product string `Mouse Bridge Remapper`
+- no serial string (`iSerialNumber = 0`)
+- interface 0: HID Mouse
+- interface 1: HID Keyboard, restricted by product logic to synthetic Escape output
+- no CDC, MSC, MIDI or vendor-debug interface
 
-No diagnostic CDC, MSC, MIDI or vendor-debug interface is added to the production product merely for troubleshooting.
+`0xCAFE` is a project/local development VID convention and is not a claim of commercial USB-IF vendor allocation.
 
-Exact project VID/PID/manufacturer/product strings remain an open product decision. Until frozen, historical BLU2USB strings are evidence only and must not be copied as the final Mouse Bridge Remapper identity by accident.
+This USB device is technically a composite USB HID device because it exposes Mouse and Keyboard HID interfaces. The product's prohibition on “Composite” refers to Bluetooth Composite device pairing/domain support; it does not prohibit the fixed minimal Escape output interface required by the documented profiles.
 
-## Held-state safety
+## Fixed enumeration
 
-Mouse button and synthetic Escape output are explicit held states for the current session.
+Descriptor identity exists from boot. Bluetooth connection/search/pairing, profile changes, lock/unlock and removal/reconnect never trigger forced USB disconnect/reconnect or descriptor-shape changes.
 
-Two physical inputs from the same mouse may map to the same output target. The implementation must therefore avoid premature release when one physical source releases while another still maps to the same held target.
+## Backpressure
 
-This ownership/refcounting is **within the current mouse session only**; there is no cross-mouse aggregation because concurrent mouse connections are forbidden.
-
-Before the current session is disconnected, replaced, removed or invalidated by parser/queue failure, all held output attributable to that session is released safely.
-
-A profile change also clears stale held state from the old mapping before the new mapping becomes authoritative.
-
-## USB backpressure
-
-Persistent button/key state may not be discarded because an endpoint is temporarily busy. Relative motion can be chunked/accumulated within bounded storage, but state transitions require release-safe handling.
+Persistent button/Escape state cannot be discarded because an endpoint is temporarily busy. Relative motion may be chunked/accumulated in bounded storage and consumed only when the USB submission contract accepts it.
 
 ## Logitech HID++
 
-HID++ is upstream of canonical remap output. When Forward is remapped and a supported peer requires diversion to recover true held semantics, the vendor adapter emits correct canonical Forward transitions for the current session.
-
-Passthrough removes unneeded diversion. Unsupported peers fall back to Standard HID without breaking ordinary mouse input.
+HID++ operates upstream of canonical remap output. Supported Forward diversion must preserve real down/hold/up. Passthrough removes unnecessary diversion. Unsupported peers fall back safely to Standard HOGP input.
