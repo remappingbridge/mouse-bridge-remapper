@@ -11,7 +11,7 @@ The normative order is:
 3. accepted historical BLU2USB behavior where this documentation deliberately inherits it;
 4. source code as an implementation of the documentation.
 
-Code, tests, comments or historical branches do not override the current documentation merely because they already exist.
+Code, tests, comments or historical branches do not override current documentation merely because they already exist.
 
 ## Historical baseline
 
@@ -19,11 +19,10 @@ The stable behavioral reference is BLU2USB G06 at accepted SHA:
 
 `7eee024ad4ee726c5a85ffa2f32b9f47187878af`
 
-The new product inherits relevant mouse behavior and bug fixes from that baseline, including:
+The product inherits relevant mouse behavior and bug fixes from that baseline, including:
 
 - BLE HOGP mouse discovery/classification;
-- canonical HID parsing and source-aware held ownership;
-- release-safe disconnect/overflow handling;
+- release-safe held-state cleanup on disconnect/overflow;
 - fixed USB identity independent from Bluetooth state;
 - profile/remap behavior;
 - persistent profile and Custom state;
@@ -33,7 +32,20 @@ The new product inherits relevant mouse behavior and bug fixes from that baselin
 - current/applied cyan with selected/pressed white priority;
 - accepted renderer geometry/pixel-relocation lessons.
 
-The baseline is not copied blindly. Single-active-mouse assumptions and Bluetooth Keyboard/Composite product features are superseded.
+The baseline is not copied blindly. The current product explicitly chooses **one live mouse connection at a time**, while retaining multiple saved mice.
+
+## Superseded complexity
+
+Any previously planned simultaneous multi-mouse runtime is superseded.
+
+The implementation must not preserve multi-session HIDS coordination, cross-mouse held-button aggregation, connection-count UI, profile-focus rules for multiple live mice, or simultaneous-BLE capacity gates merely because they were documented earlier.
+
+The current model is:
+
+- many saved mice;
+- zero or one connected mouse;
+- Pair New replaces the live connection;
+- HOME with saved mice and no live connection automatically starts a bounded saved-device search.
 
 ## Explicitly excluded historical behavior
 
@@ -46,7 +58,7 @@ Historical G07+ Keyboard work is not an implementation baseline for this product
 
 ## Escape exception
 
-Escape is an explicit exception to the mouse-only input scope. A mouse button may generate standard USB Keyboard Escape through a minimal firmware-owned output capability.
+Escape is an explicit exception to the mouse-only Bluetooth input scope. A mouse button may generate standard USB Keyboard Escape through a minimal firmware-owned output capability.
 
 This exception does not authorize:
 
