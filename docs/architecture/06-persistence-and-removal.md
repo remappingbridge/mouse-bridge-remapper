@@ -1,17 +1,17 @@
 # Persistence and removal
 
+Status: **FROZEN BY MBR-00**.
+
 ## Ownership domains
 
-Persistent state is split into two ownership domains:
+Persistent state has separate ownership domains:
 
 1. **Bluetooth credentials** — bond/IRK/LTK/security data owned by BTstack/platform facilities.
-2. **Product state** — saved mouse identity/name, confirmed profile, Custom state and capability/vendor metadata owned by Mouse Bridge Remapper.
+2. **Product state** — saved Mouse identities/names, confirmed profiles, Custom state and capability/vendor metadata owned by Mouse Bridge Remapper.
 
-The product must never treat them as one opaque blob or allow product writes to overwrite credential storage.
+Product writes must not overwrite credential storage.
 
 ## Product record
-
-A versioned persistent schema should contain at least:
 
 ```text
 header {
@@ -23,7 +23,7 @@ header {
 
 saved_mice[] {
   MouseId
-  display_name
+  full_normalized_name
   confirmed_profile
   capability_metadata
   vendor_metadata_if_needed
@@ -34,101 +34,89 @@ custom_draft
 custom_draft_dirty
 ```
 
-Transient connection handles, HIDS client pointers, queue state and BTstack internal structures are never persisted as product data.
-
-The product may store many saved mice even though only one can be live at a time.
+Transient connection handles, HIDS pointers, candidate state and queue state are never persisted as product truth.
 
 ## Power-loss safety
 
-Use two alternating flash generations/slots or an equivalently proven strategy:
+Use two alternating generations/slots or equivalently proven strategy:
 
-1. serialize the new generation completely;
-2. write it to the non-current slot;
+1. serialize complete new generation;
+2. write non-current slot;
 3. verify integrity/readback as required;
-4. consider it current only after successful completion;
-5. on boot, select the newest valid generation;
-6. if the newest generation is corrupt/torn, fall back to the previous valid generation.
+4. make it current only after successful verification;
+5. boot chooses newest valid generation;
+6. corrupt/torn newest falls back to previous valid generation.
 
-No valid product record means safe defaults rather than undefined state.
+No valid record -> safe defaults / empty registry.
 
-## Boot reconstruction order
+## Boot reconstruction
 
-Before live mouse input becomes authoritative, boot reconstructs:
+Before authoritative input, restore:
 
-- saved-device registry;
-- each saved mouse's confirmed profile;
-- Custom template and unapplied draft state;
-- UI profile projection data;
-- Logitech vendor behavior requirements.
+- saved registry;
+- each saved Mouse's confirmed profile;
+- global Custom template;
+- dirty/unapplied Custom draft;
+- UI profile data;
+- vendor metadata needed for HID++ behavior.
 
-After storage validation, HOME resolution decides whether the product needs first-mouse search, saved-device search or can show the connected state once a session is ready.
+Then HOME resolver determines first search vs saved search.
 
-## Saving a newly paired mouse
+## Saving the first/new Mouse
 
-Pairing is transactional:
+A candidate is not reported as saved merely because transport connected. Product identity/state must be successfully persisted at the documented transaction point.
 
-```text
-discover
- -> authenticate
- -> classify as Mouse
- -> establish stable identity
- -> persist product record
- -> commit ready/saved transition
-```
+FIRST_MOUSE has no old live session, so accepted candidate may be persisted then promoted.
 
-The UI must not report a newly saved mouse if persistence failed.
+PAIR_NEW differs because a healthy old Mouse may remain authoritative while candidate is qualified.
 
-A search accepts only one winner. Other candidates from the same transaction are not partially saved.
+## Pair New persistence and handoff
+
+For Pair New:
+
+1. qualify unsaved candidate without mutating old Mouse's saved record/bond;
+2. candidate reaches non-authoritative replacement-ready state;
+3. freeze/release/disconnect old authoritative session while retaining its saved state/credentials;
+4. persist/verify new saved Mouse state;
+5. promote new candidate authoritative;
+6. publish success.
+
+If persistence fails during handoff after old session has been closed, the product must not falsely publish the candidate as connected/saved. It enters a defined recoverable no-live state; old saved record/bond remains eligible for HOME saved search.
+
+If Pair New expires/cancels before handoff, old Mouse remains live and no product-state mutation is required for a rejected candidate.
 
 ## Profile persistence
 
-Profile Apply is not complete until the new confirmed profile has been persisted successfully.
+Apply is complete only after confirmed profile state is persisted successfully.
 
-The accepted G06 behavior of preserving a Custom draft independently from the last actually applied profile remains the inherited default: an accepted per-source draft may survive reboot as dirty/unapplied without falsely becoming the active Custom profile.
-
-## Pair New and saved-state preservation
-
-Pair New may disconnect the currently connected mouse, but **disconnect is not deletion**.
-
-The replaced mouse keeps:
-
-- its `SavedMouse` record;
-- confirmed profile;
-- Custom relationship;
-- Bluetooth bond/credentials.
-
-If the new pairing fails, that previous mouse remains eligible for the ordinary saved-device search when HOME is entered without a live connection.
+Custom draft persists independently from last active profile. An accepted dirty/unapplied draft may survive reboot without becoming active Custom.
 
 ## Remove transaction
 
-Removing a mouse coordinates all product/security state for that `MouseId`.
+For target `MouseId`:
 
-Required semantic sequence:
-
-1. if this is the current live mouse, stop accepting new events;
-2. release all held Mouse/Escape output for the live session;
-3. disconnect and clear the live session if this mouse is connected;
+1. if target is authoritative live Mouse, stop new events;
+2. release its held Mouse/Escape output;
+3. disconnect/clear its live session;
 4. remove product registry/profile association;
-5. remove matching Bluetooth credentials/security relationship;
-6. persist and verify the new product generation;
-7. publish `RemoveConfirmed` to UI.
+5. remove matching BT credentials;
+6. persist/verify new product generation;
+7. publish `RemoveConfirmed`.
 
-If the removed mouse is not currently connected, the live session of another saved mouse is not disturbed.
+Removing a disconnected saved Mouse does not disturb another current authoritative Mouse.
 
 ## Remove destination
 
-If removal leaves zero saved mice, transition to first-mouse onboarding and begin automatic first-mouse search.
-
-If saved mice remain, return to Saved Devices on a valid remaining page.
-
-If removal also cleared the only live session, then the next HOME entry follows the ordinary rule: saved mice + no connection -> `home-searching` with automatic bounded saved search.
+- zero saved mice after removal -> `searching-first` + FIRST_MOUSE;
+- saved mice remain -> return to valid Saved Devices page;
+- if no authoritative Mouse remains, next HOME access -> `home-searching` + SEARCH_SAVED.
 
 ## Failure model
 
-A removal may not be displayed as successful while product state and security state are knowingly inconsistent.
+Never display successful removal while product/credential state is knowingly inconsistent. Partial failure must have deterministic recovery/reconciliation.
 
-The implementation must define a recoverable state for partial failures and make reboot reconciliation deterministic. Silent half-removal is prohibited.
+## Name storage/presentation boundary
 
-## Full names vs display names
+Storage preserves the best complete normalized name within schema limits.
 
-Storage should preserve the best complete normalized device name available within the chosen schema limits. Renderer truncation/ellipsis, if needed, is a presentation policy and must not destroy the stored identity/name.
+Projection renders the first 21 renderer-supported characters, no ellipsis/scrolling. If no usable name is available, render `UNKNOWN MOUSE`. Presentation truncation never changes persistent identity/name data.
