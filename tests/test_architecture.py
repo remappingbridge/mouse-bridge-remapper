@@ -330,7 +330,7 @@ def check_ble_hogp_contract() -> None:
 
     runtime = (ROOT / "include" / "mbr" / "bt_runtime" / "bt_runtime.h").read_text(encoding="utf-8")
     for token in (
-        "#define MBR_BT_RUNTIME_MESSAGE_PAYLOAD_SIZE 64u",
+        "#define MBR_BT_RUNTIME_MESSAGE_PAYLOAD_SIZE 80u",
         "#define MBR_BT_RUNTIME_QUEUE_CAPACITY 128u",
         "mbr_bt_runtime_publish",
         "mbr_bt_runtime_take_overflow",
