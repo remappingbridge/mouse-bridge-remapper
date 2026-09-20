@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "mbr/domain/domain.h"
+
 enum {
     MBR_OUTPUT_BUTTON_LEFT = 1u << 0,
     MBR_OUTPUT_BUTTON_RIGHT = 1u << 1,
@@ -22,5 +24,13 @@ typedef struct {
 } mbr_output_state_t;
 
 void mbr_output_state_clear(mbr_output_state_t *state);
+bool mbr_output_state_apply_mouse_event(mbr_output_state_t *state,
+                                        const mbr_mouse_event_t *event);
+void mbr_output_state_release_all(mbr_output_state_t *state);
+bool mbr_output_state_consume_relative(mbr_output_state_t *state,
+                                       int16_t x,
+                                       int16_t y,
+                                       int16_t wheel,
+                                       int16_t pan);
 
 #endif
