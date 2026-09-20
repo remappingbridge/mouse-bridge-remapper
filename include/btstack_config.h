@@ -1,6 +1,9 @@
 #ifndef MBR_BTSTACK_CONFIG_H
 #define MBR_BTSTACK_CONFIG_H
 
+/* Required to compile the SDK dump helper; no dump backend/stdio is enabled. */
+#define ENABLE_PRINTF_HEXDUMP
+
 
 #ifdef ENABLE_BLE
 #define ENABLE_GATT_CLIENT_PAIRING

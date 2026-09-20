@@ -40,7 +40,7 @@ All inherited source was inspected at immutable BLU2USB G06
 | `src/ble_hogp/ble_hogp.c` | `src/ble_hogp/ble_hogp.c`: bounded descriptor/bit parser; session IDs, stricter composite/map rejection, 64-bit sums |
 | `src/ble_hogp/ble_hogp_pico.c` | `src/ble_hogp/ble_hogp_pico.c`: security/HIDS discovery and callbacks; explicit transaction/handle/CID guards, name read, accepted RAM identities |
 | `src/bt_runtime/bt_runtime_pico.c` | `src/bt_runtime/bt_runtime_pico.c`: core-0 threadsafe-background initialization, locked command/queue facade |
-| `include/btstack_config.h` | `include/btstack_config.h`: BLE-only fixed-capacity configuration; diagnostic print definitions removed |
+| `include/btstack_config.h` | `include/btstack_config.h`: BLE-only fixed-capacity configuration; error logging disabled; SDK-required hexdump helper compiled, no stdio/dump enabled |
 | `src/bt_runtime/g05_hog_host.gatt` | `src/bt_runtime/mbr_hog_host.gatt`: product GAP name |
 
 No G07 implementation or Bluetooth Keyboard/Classic transport was imported.
@@ -82,3 +82,7 @@ CI uses exact PR HEAD (not its synthetic merge ref), pinned SDK 2.2.0 SHA
 Final commit/run/artifact/hash evidence is recorded in the planner execution
 `mouse-bridge-remapper/executions/rebuild-mbr-05/candidate-evidence.md`.
 Only the operator may close physical MBR-05. MBR-06 remains blocked until then.
+
+Local ASan/UBSan passes with `ASAN_OPTIONS=detect_leaks=0`; LeakSanitizer itself
+cannot run under this workspace tracer. Firmware core uses no dynamic allocation.
+Build retains G06 `CYW43_LWIP=0` and bounded HCI process loop count 8.

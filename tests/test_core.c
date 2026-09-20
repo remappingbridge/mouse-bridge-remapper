@@ -11,5 +11,7 @@ int main(void) {
  const char *in[]={"LIFT","mouse generic","XPTO ULTRA 2714","ABCDEFGHIJKLMNOPQRSTUV","MOUSEPAD","AB MOUSE CD","abcdefghijklmnop MOUSE","","   ",NULL};
  const char *out[]={"LIFT MOUSE","MOUSE GENERIC","XPTO ULTRA 2714 MOUSE","ABCDEFGHIJKLMNO MOUSE","MOUSEPAD MOUSE","AB MOUSE CD","ABCDEFGHIJKLMNO","UNKNOWN MOUSE","UNKNOWN MOUSE","UNKNOWN MOUSE"};
  for(unsigned i=0;i<sizeof(in)/sizeof(in[0]);++i) {mbr_home_title(in[i],name);assert(strcmp(name,out[i])==0);assert(strlen(name)<=21);}
+ char bounded[MBR_NAME_CAPACITY];memset(bounded,0xff,sizeof(bounded));
+ mbr_display_name(bounded,name);assert(!strcmp(name,"UNKNOWN MOUSE"));mbr_home_title(bounded,name);assert(!strcmp(name,"UNKNOWN MOUSE"));
  return 0;
 }

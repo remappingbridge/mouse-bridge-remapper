@@ -92,7 +92,7 @@ Each saved Mouse has one page.
 
 At most one page is connected/cyan.
 
-Names are stored in full normalized form within schema limits. Display uses the first 21 renderer-supported characters, with no ellipsis or scrolling. Empty/unusable name falls back to `UNKNOWN MOUSE`.
+Names are stored in full normalized form within schema limits. Saved Devices/removal use the first 21 renderer-supported characters. HOME-connected uses the first 15 supported name characters plus ` MOUSE` unless the full bounded name already has standalone MOUSE (case-insensitive). Neither policy uses ellipsis or scrolling. Empty/unusable name falls back to `UNKNOWN MOUSE`.
 
 ## Profiles
 

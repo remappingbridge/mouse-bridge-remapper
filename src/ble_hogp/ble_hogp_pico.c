@@ -33,7 +33,9 @@ static void drop(void) {
  if(state==DISCONNECT)return;
  if(state==READY)(void)status(MBR_BT_DISCONNECTED);
  if(state==SCAN)gap_stop_scan();
- if(state==CONNECT) {state=DISCONNECT;(void)gap_connect_cancel();return;}
+ if(state==CONNECT) {state=DISCONNECT;
+  if(gap_connect_cancel()!=ERROR_CODE_SUCCESS) {state=IDLE;start_search();}
+  return;}
  if(handle!=HCI_CON_HANDLE_INVALID) {state=DISCONNECT;gap_disconnect(handle);return;}
  state=IDLE;start_search();
 }
@@ -143,7 +145,7 @@ static void hci_event(uint8_t type,uint16_t channel,uint8_t *packet,uint16_t siz
  (void)channel;(void)size;if(type!=HCI_EVENT_PACKET)return;
  switch(hci_event_packet_get_type(packet)) {
  case BTSTACK_EVENT_STATE:
-  if(btstack_event_state_get_state(packet)==HCI_STATE_WORKING) {working=true;state=IDLE;start_search();}break;
+  if(!working&&btstack_event_state_get_state(packet)==HCI_STATE_WORKING) {working=true;state=IDLE;start_search();}break;
  case GAP_EVENT_ADVERTISING_REPORT: {
   if(state!=SCAN)return;
   bd_addr_t address;gap_event_advertising_report_get_address(packet,address);
