@@ -6,7 +6,20 @@ void mbr_usb_reports(const mbr_output_state_t *s,MbrMouseReport *m,MbrEscapeRepo
  *e=(MbrEscapeReport){{0,0,s->escape?0x29:0,0,0,0,0,0}};
 }
 void mbr_usb_release(MbrUsbQueue *q) { memset(q,0,sizeof(*q));q->write=1; }
+static int32_t accumulate(int32_t a,int32_t b) {
+ int64_t v=(int64_t)a+b;
+ return (int32_t)(v>MBR_MOTION_LIMIT?MBR_MOTION_LIMIT:v< -MBR_MOTION_LIMIT?-MBR_MOTION_LIMIT:v);
+}
 bool mbr_usb_enqueue(MbrUsbQueue *q,const mbr_output_state_t *s) {
+ /* Coalesce motion only behind the in-flight report and without crossing an edge. */
+ uint8_t last=(uint8_t)((q->write+31)%32);
+ if(q->read!=q->write&&last!=q->read) {
+  mbr_output_state_t *tail=&q->queue[last];
+  if(tail->buttons==s->buttons&&tail->escape==s->escape) {
+   tail->x=accumulate(tail->x,s->x);tail->y=accumulate(tail->y,s->y);
+   tail->wheel=accumulate(tail->wheel,s->wheel);tail->pan=accumulate(tail->pan,s->pan);return true;
+  }
+ }
  uint8_t next=(uint8_t)((q->write+1)%32);
  if(next==q->read) { mbr_usb_release(q); return false; }
  q->queue[q->write]=*s; q->write=next; return true;

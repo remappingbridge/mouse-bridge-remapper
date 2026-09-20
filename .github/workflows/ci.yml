@@ -1,4 +1,4 @@
-name: MBR clean rebuild
+name: MBR verification
 on:
   push:
     branches: [main, 'mbr/**']
@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: cmake -S . -B build-host -DCMAKE_BUILD_TYPE=Debug
       - run: cmake --build build-host --parallel
       - run: ctest --test-dir build-host --output-on-failure
@@ -17,6 +19,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Pinned toolchain and SDK
         run: |
           source ci/toolchain.env
@@ -24,7 +28,7 @@ jobs:
           sudo apt-get install -y "gcc-arm-none-eabi=${ARM_GCC_PACKAGE_VERSION}" libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
           git clone --depth 1 --branch "$PICO_SDK_VERSION" https://github.com/raspberrypi/pico-sdk.git "$RUNNER_TEMP/pico-sdk"
           test "$(git -C "$RUNNER_TEMP/pico-sdk" rev-parse HEAD)" = a1438dff1d38bd9c65dbd693f0e5db4b9ae91779
-          git -C "$RUNNER_TEMP/pico-sdk" submodule update --init --depth 1 lib/tinyusb
+          git -C "$RUNNER_TEMP/pico-sdk" submodule update --init --depth 1 lib/tinyusb lib/btstack lib/cyw43-driver lib/lwip
       - name: Build both firmware targets
         run: |
           export PICO_SDK_PATH="$RUNNER_TEMP/pico-sdk"
@@ -34,7 +38,7 @@ jobs:
           sha256sum build-pico/*.uf2
       - uses: actions/upload-artifact@v4
         with:
-          name: mbr-04-pico2w-production-and-qualification
+          name: mbr-05-pico2w-production-and-qualification
           path: |
             build-pico/*.uf2
             build-pico/*.elf

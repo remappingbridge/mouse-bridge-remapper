@@ -25,6 +25,14 @@ int main(int argc,char **argv) {
   }
   if(strstr(mbr_screens[s].id,"help")) { assert(f.hint==8); for(unsigned r=1;r<=6;++r) assert(f.cells[r][0].tone==MBR_BODY); }
   if(f.hint<9) { unsigned boundary=mbr_hint_boundary(&f);assert(boundary+11==mbr_text_y(&f,f.hint));assert(pixels[boundary*240]==MBR_DARK_MAGENTA); }
+  if(s==MBR_SCREEN_SEARCHING_FIRST||s==MBR_SCREEN_FIRST_MOUSE_CONNECTED||s==MBR_SCREEN_LEARN_THE_KEYS) {
+   assert(f.didactic&&mbr_hint_boundary(&f)==0);
+   for(unsigned y=0;y<240;++y)assert(pixels[y*240]==MBR_DARK_MAGENTA&&pixels[y*240+239]==MBR_DARK_MAGENTA);
+   for(unsigned x=0;x<240;++x)assert(pixels[x]==MBR_DARK_MAGENTA&&pixels[239*240+x]==MBR_DARK_MAGENTA);
+  }
+  if(s==MBR_SCREEN_HOME_CONNECTED||s==MBR_SCREEN_HOME_SEARCHING||s==MBR_SCREEN_HOME_RETRY)
+   for(unsigned row=1;row<= (s==MBR_SCREEN_HOME_CONNECTED?4u:3u);++row)
+    for(unsigned c=0;c<21;++c)assert(f.cells[row][c].tone==(row==1?MBR_WHITE:MBR_ACTION));
   if(argc>1)ppm(argv[1],s);
  }
  assert(mbr_tone_rgb565(MBR_ACTION)==0xc618);assert(mbr_tone_rgb565(MBR_WHITE)==0xffff);

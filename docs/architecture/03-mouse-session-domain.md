@@ -126,3 +126,14 @@ If Mouse A is manually unplugged while Pair New is active, A follows ordinary di
 Disconnect/handoff never implies deletion. The old Mouse keeps its saved record/profile/bond unless the user explicitly removes it.
 
 Removal is the only product action that deletes the saved relationship and coordinates matching credential deletion.
+
+## MBR-05 generation boundary
+
+Radio attempts increment a nonzero transport generation. Application promotion
+allocates an independent `MouseSessionId`; the bridge retains the explicit
+transport→application mapping. Only matching ready-session reports can enter
+current-session held ownership. Stale transport disconnect/input cannot release
+or mutate a newer session. Disconnect/overflow clears the mapping before further
+messages are processed. Physical source Up releases its captured Down target,
+so duplicate Down/Up is idempotent and shared targets remain held until all current
+owners release.

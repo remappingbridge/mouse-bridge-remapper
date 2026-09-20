@@ -127,3 +127,19 @@ The product has:
 - one saved-only HOME search transaction.
 
 There is no multi-connected HOME, cross-Mouse button aggregation, live-Mouse focus selector or simultaneous-HIDS capacity requirement.
+
+## HOME visual amendment, 2026-09-20
+
+HOME-connected uses the first **15 renderer-supported characters** of the name
+(uppercase, no ellipsis), trims trailing spaces, and appends ` MOUSE` only if the
+full bounded original name does not contain the standalone word `MOUSE`, ignoring
+case. Word boundaries are non-ASCII-alphanumeric/non-underscore characters.
+The result fits 21 display columns. A `MOUSE` word beyond column 15 also suppresses
+the suffix; truncation is never expanded to preserve a word. Empty/unusable names
+remain `UNKNOWN MOUSE`. Stored names are unchanged. Examples: `LIFT` → `LIFT MOUSE`,
+`MOUSE GENERIC` → `MOUSE GENERIC`, `XPTO ULTRA 2714` → `XPTO ULTRA 2714 MOUSE`
+(the original has 14 characters), `ABCDEFGHIJKLMNOP` → `ABCDEFGHIJKLMNO MOUSE`.
+Saved Devices/removal retain their separate first-21-supported-character policy.
+
+HOME navigation options are light gray, with white selection, including the
+remap-summary option. No HOME menu entry uses cyan as a status indicator.

@@ -119,3 +119,27 @@ Session/transaction identities make stale events ignorable.
 ## Failure safety
 
 Security/HIDS/parser/report failures return to coordinator policy and never trap USB/UI servicing. Disconnect, handoff, removal, profile change or queue-continuity loss releases held state before authoritative session disposal.
+
+## MBR-05 adapter boundary
+
+The clean candidate uses BLE-only central security (NoInputNoOutput, Secure
+Connections + bonding), GAP Device Name lookup, one HIDS instance in Report
+Protocol, and Report Map classification before readiness. Non-Mouse standard
+application collections are rejected, including Keyboard/Composite; vendor
+usage page 0xFF00 remains optional input with no HID++ dependency. Known explicit
+non-Mouse HID appearances are filtered before connection.
+
+HCI handles, HIDS CIDs, transport generations and search transaction tokens guard
+callbacks. Repeated FIRST cycles and current-boot saved reconnect use the existing
+8-second application deadlines. Saved reconnect uses accepted RAM identities and
+the controller resolving list/whitelist. Bond identity is read from the LE device
+DB after security; RPA addresses are not used as the saved product identity when
+an identity is available. Credentials use SDK 2.2.0 BTstack TLV flash banks (Pico
+2 W offsets 0x3FD000..0x3FEFFF, 8192 bytes). Product records remain RAM only in this
+gate; durable registry and reboot reconnect qualification are MBR-06/07.
+
+A healthy mouse remains active when Pair New is opened, but simultaneous candidate
+qualification/replacement is not implemented until MBR-07. This candidate times
+out that search without disconnecting the existing mouse. MBR-05 physical closure
+covers fresh pair and same-boot reconnect, not full replacement or power-cycle
+product-state restoration.

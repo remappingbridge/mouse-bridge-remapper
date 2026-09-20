@@ -51,7 +51,9 @@ MBR-00 closed the implementation-facing ambiguities that existed before the cont
 ## Frozen dynamic-name policy
 
 - persist full normalized available name within schema limits;
-- render first 21 supported characters;
+- HOME-connected: first 15 supported name characters plus conditional ` MOUSE`;
+- suppress suffix if full bounded name already has standalone MOUSE, ignoring case;
+- Saved Devices/removal: first 21 supported characters;
 - no ellipsis/scrolling;
 - fallback `UNKNOWN MOUSE`.
 
@@ -96,3 +98,9 @@ Do not reintroduce:
 ## Change rule
 
 Any future change to the above is a product-contract change. It must update documentation/planning before implementation and must identify affected predecessor evidence.
+
+## Visual amendment accepted for MBR-05, 2026-09-20
+
+All HOME actions use light gray and white selection, including the remapper link.
+Searching-first and first-mouse-connected fill the screen with the same dark
+magenta as Learn the Keys. Current-profile cyan inside Remapper Options is unchanged.

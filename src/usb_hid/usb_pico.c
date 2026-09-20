@@ -2,15 +2,17 @@
 #include "tusb.h"
 #include <string.h>
 static MbrUsbQueue queue;
+static uint32_t epoch;
+uint32_t mbr_usb_epoch(void) { return epoch; }
 static bool send(void *ctx,unsigned i,const void *p,size_t n) { (void)ctx;return tud_hid_n_ready((uint8_t)i)&&tud_hid_n_report((uint8_t)i,0,p,(uint16_t)n); }
 void mbr_usb_init(void) { mbr_usb_release(&queue);(void)tud_init(0); }
 void mbr_usb_task(void) { tud_task();if(tud_mounted()&&!tud_suspended())mbr_usb_drain(&queue,send,NULL); }
 bool mbr_usb_submit(const mbr_output_state_t *s) { return mbr_usb_enqueue(&queue,s); }
 void mbr_usb_release_all(void) { mbr_usb_release(&queue); }
-void tud_mount_cb(void) { mbr_usb_release(&queue); }
-void tud_umount_cb(void) { mbr_usb_release(&queue); }
-void tud_suspend_cb(bool remote_wakeup_en) { (void)remote_wakeup_en;mbr_usb_release(&queue); }
-void tud_resume_cb(void) { mbr_usb_release(&queue); }
+void tud_mount_cb(void) { ++epoch; mbr_usb_release(&queue); }
+void tud_umount_cb(void) { ++epoch; mbr_usb_release(&queue); }
+void tud_suspend_cb(bool remote_wakeup_en) { ++epoch; (void)remote_wakeup_en;mbr_usb_release(&queue); }
+void tud_resume_cb(void) { ++epoch; mbr_usb_release(&queue); }
 const uint8_t *tud_descriptor_device_cb(void) { size_t n;return mbr_usb_device_descriptor(&n); }
 const uint8_t *tud_descriptor_configuration_cb(uint8_t index) { size_t n;return index==0?mbr_usb_configuration_descriptor(&n):NULL; }
 const uint8_t *tud_hid_descriptor_report_cb(uint8_t i) { size_t n;return mbr_usb_report_descriptor(i,&n); }
