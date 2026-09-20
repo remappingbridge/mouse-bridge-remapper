@@ -129,4 +129,4 @@ There are no Pair Keyboard, Pair Composite, Bluetooth Keyboard input, Bluetooth 
 
 ## MBR-03 status
 
-The renderer/HAT implementation is complete on branch `mbr/mbr-03-renderer-hat` pending automated CI and physical acceptance. The exact candidate UF2 is produced by CI; the physical qualification firmware cycles all 30 canonical screens and exercises the same renderer/HAT modules without enabling serial or CDC diagnostics.
+The renderer/HAT implementation is complete on branch `mbr/mbr-03-renderer-hat` automated CI passed; physical acceptance pending. The exact candidate UF2 is produced by CI; the physical qualification firmware cycles all 30 canonical screens and exercises the same renderer/HAT modules without enabling serial or CDC diagnostics.
