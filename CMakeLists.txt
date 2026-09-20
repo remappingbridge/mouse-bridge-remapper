@@ -50,9 +50,13 @@ if(MBR_BUILD_TESTS)
     target_link_libraries(mbr_test_bootstrap PRIVATE mbr_module_app)
     add_test(NAME bootstrap_contract COMMAND mbr_test_bootstrap)
 
-    add_executable(mbr_test_ux tests/test_ux.c)
-    target_link_libraries(mbr_test_ux PRIVATE mbr_module_app)
-    add_test(NAME ux_contract COMMAND mbr_test_ux)
+    add_executable(mbr_test_ux_golden tests/test_ux_golden.c)
+    target_link_libraries(mbr_test_ux_golden PRIVATE mbr_module_app)
+    add_test(NAME ux_golden_contract COMMAND mbr_test_ux_golden)
+
+    add_executable(mbr_test_ux_behavior tests/test_ux_behavior.c)
+    target_link_libraries(mbr_test_ux_behavior PRIVATE mbr_module_app)
+    add_test(NAME ux_behavior_contract COMMAND mbr_test_ux_behavior)
 
     add_test(
         NAME architecture_contract
