@@ -1,6 +1,6 @@
 # Documentation authority
 
-Status: **MBR-00 CONTRACT FROZEN**.
+Status: **MBR-00 CONTRACT FROZEN; MBR-02 CONNECTED-HOME AMENDMENT ACCEPTED**.
 
 ## Principle
 
@@ -38,9 +38,12 @@ Previously planned simultaneous-authoritative-Mouse runtime/count/focus/capacity
 
 ## Pair New authority
 
-The latest Pair New Help/flow clarification is normative:
+The latest Pair New Help/flow clarification and the 2026-09-20 connected-HOME amendment are normative:
 
 - healthy current Mouse remains connected during Pair New search;
+- `home-connected` title is the connected Mouse name;
+- `home-connected` exposes Pair New as its first visible option, followed by remap summary, Saved Devices and Learn the Keys;
+- the first option is the visible entry into Pair New while the current Mouse remains live;
 - saved candidates are not accepted by Pair New;
 - an unsaved candidate is qualified as non-authoritative replacement-ready;
 - old Mouse is release-cleaned/disconnected only at handoff;
