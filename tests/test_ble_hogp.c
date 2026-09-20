@@ -103,7 +103,7 @@ static int test_report_id_framing(void)
     size_t payload_len = 0u;
     CHECK(mbr_ble_hogp_parser_normalize_report(
         &parser, 2u, framed, sizeof(framed), &payload, &payload_len));
-    CHECK(payload == &framed[1] && payload_len == 5u);
+    CHECK(payload == &framed[1] && payload_len == 4u);
 
     sink_t sink = {0};
     CHECK(mbr_ble_hogp_parser_parse_report(
@@ -113,7 +113,7 @@ static int test_report_id_framing(void)
     CHECK(sink.events[0].data.move.dx == 3);
     CHECK(sink.events[0].data.move.dy == -4);
 
-    uint8_t bad[6];
+    uint8_t bad[5];
     memcpy(bad, framed, sizeof(bad));
     bad[0] = 7u;
     CHECK(!mbr_ble_hogp_parser_normalize_report(
