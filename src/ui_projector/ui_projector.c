@@ -51,10 +51,10 @@ void mbr_project(const MbrView *v,MbrFrame *f) {
  MbrProfile p=v->profile<=MBR_CUSTOM?v->profile:MBR_PASSTHROUGH;
  int selected=-1;
  if(v->screen==S(HOME_CONNECTED)) {
-  replace(f,0,name,MBR_TITLE);
+  mbr_home_title(v->name,name); replace(f,0,name,MBR_TITLE);
   if(p==MBR_PASSTHROUGH) strcpy(text," NO REMAP PASSTHROUGH");
   else snprintf(text,sizeof(text)," REMAPPED TO %s",profiles[p]);
-  replace(f,2,text,MBR_CYAN); selected=1+v->selection;
+  replace(f,2,text,MBR_ACTION); selected=1+v->selection;
  } else if(v->screen==S(HOME_SEARCHING)||v->screen==S(HOME_RETRY)) selected=1+v->selection;
  else if(v->screen==S(REMAPPER_OPTIONS)) { row(f,1+p,MBR_CYAN); selected=1+v->selection; }
  else if(v->screen==S(CUSTOM_EDIT)) {

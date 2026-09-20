@@ -26,6 +26,6 @@ int main(void) {
  // Backpressure preserves press then release, including the Escape endpoint.
  h.ready[1]=false;s.escape=true;assert(mbr_usb_enqueue(&q,&s));s.escape=false;assert(mbr_usb_enqueue(&q,&s));mbr_usb_drain(&q,send,&h);h.ready[1]=true;mbr_usb_drain(&q,send,&h);assert(h.key==0x29);mbr_usb_drain(&q,send,&h);assert(h.key==0);
  // Overflow discards uncertain held state and queues all-up.
- bool overflow=false;s.buttons=31;s.escape=true;for(unsigned i=0;i<32;++i)if(!mbr_usb_enqueue(&q,&s))overflow=true;assert(overflow);mbr_usb_drain(&q,send,&h);assert(h.key==0&&h.buttons==0);
+ bool overflow=false;s.buttons=31;s.escape=true;for(unsigned i=0;i<32;++i){s.buttons=(i%2)?1:2;if(!mbr_usb_enqueue(&q,&s))overflow=true;}assert(overflow);mbr_usb_drain(&q,send,&h);assert(h.key==0&&h.buttons==0);
  return 0;
 }

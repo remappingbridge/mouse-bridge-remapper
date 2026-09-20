@@ -17,3 +17,15 @@ typedef struct { MouseId mouse; MouseSessionId generation; bool ready; } MbrSess
 typedef enum { MBR_SEARCH_NONE, MBR_SEARCH_FIRST, MBR_SEARCH_SAVED, MBR_SEARCH_NEW } MbrSearch;
 typedef struct { uint8_t buttons; bool escape; int32_t x,y,wheel,pan; } mbr_output_state_t;
 void mbr_display_name(const char *name, char out[22]);
+
+/* Canonical transport events carry the connection generation, never a pointer. */
+typedef enum { MBR_MOUSE_BUTTON, MBR_MOUSE_MOVE, MBR_MOUSE_WHEEL } MbrMouseEventKind;
+typedef struct {
+ MouseSessionId session; MbrMouseEventKind type;
+ union {
+  struct { uint8_t button; bool pressed; } button;
+  struct { int16_t dx,dy; } move;
+  struct { int16_t vertical,horizontal; } wheel;
+ } data;
+} MbrMouseEvent;
+void mbr_home_title(const char *name,char out[22]);

@@ -211,7 +211,20 @@ JOY PRESS: ACCESS
 KEY X: HELP TO REMOVE
 ```
 
-The title is dynamically the display name of the sole connected Mouse. Long names are projected as the first 21 renderer-supported characters; storage retains the complete normalized name. If no usable name is available, display `UNKNOWN MOUSE`.
+HOME-connected uses the first **15 renderer-supported characters** of the name
+(uppercase, no ellipsis), trims trailing spaces, and appends ` MOUSE` only if the
+full bounded original name does not contain the standalone word `MOUSE`, ignoring
+case. Word boundaries are non-ASCII-alphanumeric/non-underscore characters.
+The result fits 21 display columns. A `MOUSE` word beyond column 15 also suppresses
+the suffix; truncation is never expanded to preserve a word. Empty/unusable names
+remain `UNKNOWN MOUSE`. Stored names are unchanged. Examples: `LIFT` → `LIFT MOUSE`,
+`MOUSE GENERIC` → `MOUSE GENERIC`, `XPTO ULTRA 2714` → `XPTO ULTRA 2714 MOUSE`
+(the original has 14 characters), `ABCDEFGHIJKLMNOP` → `ABCDEFGHIJKLMNO MOUSE`.
+Saved Devices/removal retain their separate first-21-supported-character policy.
+
+All HOME options (searching/retry/connected), including the remap-summary link,
+use ordinary action light gray and white selection. They never use status cyan.
+The current-profile highlight inside `remapper-options` remains cyan.
 
 The four options are ordered:
 
@@ -481,7 +494,7 @@ Status text is exactly `STATUS: CONNECTED` for the current ready Mouse and `STAT
 
 Profile values are `PASSTHROUGH`, `STANDARD`, `ESCAPE`, or `CUSTOM`. `JOY RIGHT/LEFT` wraps pages. `JOY PRESS` on `REMOVE DEVICE` opens `remove-this`. `KEY B` invokes HOME resolver.
 
-Name presentation follows the same 21-character first-character policy as HOME, with fallback `UNKNOWN MOUSE`.
+Saved/removal name presentation uses the first 21 supported characters, with fallback `UNKNOWN MOUSE`. It does not apply the HOME title suffix rule.
 
 ## remove-this
 
@@ -536,3 +549,9 @@ Frozen columns: `JOY UP` 8; three `JOY` 3/10/17; `LEFT`/`PRESS`/`RIGHT` 3/9/16; 
 ## Screens intentionally absent
 
 There are no product screens for Pair Keyboard, Keyboard Saved, Pair Composite, Composite Saved or Other Devices. There is no multi-connected Mouse count/focus screen. Synthetic Escape is not permission to restore Bluetooth Keyboard/Composite product scope.
+
+## 2026-09-20 background clarification
+
+`searching-first`, `first-mouse-connected` and `learn-the-keys` fill the entire
+240×240 display with the same dark magenta (`MBR_DARK_MAGENTA`, RGB565 `0x0801`),
+including margins and title region; no black panel or footer-only fill.

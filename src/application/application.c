@@ -133,7 +133,8 @@ bool mbr_app_confirm(MbrApp *a,uint32_t token,bool success) {
  if(!success) { if(r.kind==MBR_OP_HANDOFF) a->sessions.candidate=(MbrSession){0}; return true; }
  int i=mbr_registry_find(&a->registry,r.mouse);
  if(r.kind==MBR_OP_HANDOFF) {
-  /* Adapter confirms release -> old disconnect -> persistence before this call. */
+  /* Adapter confirms required effects before this call. MBR-05 supports only
+   * initial/same-boot RAM registration; durable replacement is MBR-07. */
   bool first=a->registry.count==0;
   if(!mbr_registry_put(&a->registry,&a->candidate)) return false;
   a->sessions.live=(MbrSession){0};

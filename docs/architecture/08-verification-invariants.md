@@ -56,7 +56,7 @@ These are mandatory implementation/test properties.
 4. No `N DEVICES CONNECTED` form exists.
 5. Saved Devices has at most one cyan/CONNECTED page.
 6. Disconnected saved Mouse status is exactly `STATUS: DISCONNECTED`.
-7. Name projection is deterministic: first 21 supported characters; fallback `UNKNOWN MOUSE`.
+7. Name projection is deterministic: HOME uses 15 supported characters plus conditional ` MOUSE`; Saved Devices/removal use 21; fallback `UNKNOWN MOUSE`.
 8. Selected/pressed white overrides cyan.
 9. Async state events update relevant visible UI without waiting for unrelated input.
 10. Actions execute on release.

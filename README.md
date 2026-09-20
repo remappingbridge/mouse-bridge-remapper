@@ -4,7 +4,7 @@ Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing BLE HOGP 
 
 This repository follows **documentation as product, code as consequence**. The manual and architecture are the product contract; firmware must implement them rather than redefine them.
 
-> Current status: **RESET TO CLEAN DOCUMENTATION-ONLY BASELINE. All MBR gates are BACKLOG.** The historical implementation records remain in documentation; implementation code and gate branches are no longer the active baseline.
+> Current status (2026-09-20): **clean rebuilt MBR-00 through MBR-04 accepted by the operator** at `8bebe26ff7554ffa811a58ea024cae5fe80a4a84`. **MBR-05 candidate implemented; physical acceptance pending.** This branch adds real BLE Mouse passthrough and the HOME visual amendment. Earlier pre-reset records are historical.
 
 ## Product in one paragraph
 
@@ -139,7 +139,7 @@ MBR-04 was implemented on the historical branch `mbr/mbr-04-usb-hid`. Its fixed 
 
 ## Clean MBR-00 through MBR-04 implementation
 
-The clean rebuild lives on `mbr/rebuild-00-through-04`. It implements host-pure UX, all 30 canonical screens, the Waveshare display/HAT, and fixed USB Mouse + synthetic Escape. Physical validation is deferred by explicit user authorization, not marked PASS. Real BLE forwarding begins in MBR-05.
+The clean rebuild lives on `mbr/rebuild-00-through-04`. It implements host-pure UX, all 30 canonical screens, the Waveshare display/HAT, and fixed USB Mouse + synthetic Escape. The operator reported all physical tests passed and accepted MBR-00 through MBR-04 on 2026-09-20. MBR-05 adds real BLE passthrough on that base.
 
 Build on Ubuntu 24.04 with CMake and the versions in `ci/toolchain.env`:
 
@@ -149,7 +149,7 @@ cmake --build build-host --parallel
 ctest --test-dir build-host --output-on-failure
 
 export PICO_SDK_PATH=/path/to/pico-sdk-2.2.0
-# Initialize the pinned SDK's lib/tinyusb submodule before building.
+# Initialize the pinned SDK's lib/tinyusb, lib/btstack and lib/cyw43-driver submodules.
 cmake -S . -B build-pico -DMBR_BUILD_PICO=ON -DPICO_BOARD=pico2_w -DCMAKE_BUILD_TYPE=Release
 cmake --build build-pico --parallel
 python3 tools/verify_uf2.py build-pico/*.uf2
@@ -158,3 +158,12 @@ python3 tools/verify_uf2.py build-pico/*.uf2
 Outputs: `build-pico/mouse_bridge_remapper.uf2` and `build-pico/mouse_bridge_remapper_qualification.uf2`. The qualification image has an explicit RAM-fixture menu and USB output tests; it is compiled separately and is not the product runtime.
 
 See [manual scenarios in Portuguese](docs/implementation/05-testes-manuais-mbr04.md) and [clean rebuild evidence](docs/implementation/04-rebuild-00-04.md). Historical implementation documents describe the pre-reset attempt; current rebuild evidence takes precedence for what this branch actually implements.
+
+## MBR-05 candidate
+
+See [implementation and limitations](docs/implementation/06-mbr05-ble-passthrough.md)
+and [physical test scenarios](docs/implementation/07-testes-manuais-mbr05.md).
+HOME names use 15 characters plus conditional ` MOUSE`; HOME options use action
+gray/white; onboarding screens retain full magenta. Real generic BLE passthrough
+is available. Profiles/HID++, persistent product records, replacement and removal
+remain later gates; the UI does not falsely confirm those effects.

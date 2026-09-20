@@ -24,3 +24,5 @@ const uint8_t *mbr_usb_device_descriptor(size_t *length);
 const uint8_t *mbr_usb_configuration_descriptor(size_t *length);
 const uint8_t *mbr_usb_report_descriptor(unsigned interface,size_t *length);
 const char *mbr_usb_string(unsigned index);
+
+uint32_t mbr_usb_epoch(void);

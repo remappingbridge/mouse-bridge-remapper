@@ -26,10 +26,10 @@
     "domain"
   ],
   "ble_hogp": [
-    "mouse_session",
-    "logitech_hidpp"
+    "domain"
   ],
   "bt_runtime": [
+    "domain",
     "ble_hogp"
   ],
   "interaction": [
@@ -56,6 +56,8 @@
     "pairing_coordinator",
     "renderer",
     "hat",
-    "usb_hid"
+    "usb_hid",
+    "bt_runtime",
+    "output_state"
   ]
 }

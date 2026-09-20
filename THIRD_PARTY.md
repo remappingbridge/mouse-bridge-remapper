@@ -1,8 +1,13 @@
 # Third-party provenance
 
-The 5x7 font, RGB565 palette, panel initialization sequence, panel pin map, and physical text geometry are adapted from `tiagooliveirajs/blu2usb` at accepted G06 commit `7eee024ad4ee726c5a85ffa2f32b9f47187878af`, under the MIT license below. Relevant files: `src/renderer/renderer.c`, `src/renderer/st7789_pico.c`, `include/blu2usb/renderer/renderer.h`, `src/hat/hat.c`.
+The 5x7 font, RGB565 palette, panel initialization sequence, panel pin map, and physical text geometry are adapted from `tiagooliveirajs/blu2usb` at accepted G06 commit `7eee024ad4ee726c5a85ffa2f32b9f47187878af`, under the CC0 1.0 dedication reproduced below. Relevant files: `src/renderer/renderer.c`, `src/renderer/st7789_pico.c`, `include/blu2usb/renderer/renderer.h`, `src/hat/hat.c`.
 
 The new UI projector, interaction/application model, registry, search coordinator, tests and report flow were implemented on the clean MBR documentation baseline. No historical MBR code was restored. Pico SDK and its pinned TinyUSB submodule retain their own licenses and are external build dependencies.
+
+MBR-05 also adapts the accepted G06 HOGP parser, BLE discovery/security adapter,
+core-0 BTstack runtime setup and BLE configuration. See the source-to-destination
+manifest in `docs/implementation/06-mbr05-ble-passthrough.md`. Pico SDK, BTstack and
+CYW43 remain pinned external dependencies with their upstream licenses.
 
 Creative Commons Legal Code
 
