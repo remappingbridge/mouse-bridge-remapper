@@ -4,6 +4,7 @@
 #include "mbr/hat/hat.h"
 #include "mbr/interaction/interaction.h"
 #include "mbr/renderer/renderer.h"
+#include "mbr/usb_hid/usb_hid.h"
 
 static void render_state(const mbr_display_hal_t *display, const mbr_ux_model_t *model)
 {
@@ -22,12 +23,14 @@ int main(void)
     mbr_ux_model_init(&model,storage,4u);
     mbr_ux_boot(&model,&effects);
 
+    if (!mbr_usb_hid_pico_init()) for (;;) tight_loop_contents();
     if (!mbr_renderer_init(&display)) for (;;) tight_loop_contents();
     mbr_hat_pico_init();
     render_state(&display,&model);
     mbr_renderer_set_backlight(true);
 
     for (;;) {
+        mbr_usb_hid_pico_task();
         mbr_hat_pico_task();
         mbr_hat_event_t event;
         while (mbr_hat_pico_poll_event(&event)) {
