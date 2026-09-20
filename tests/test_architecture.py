@@ -66,7 +66,10 @@ def source_files() -> list[Path]:
             # TinyUSB's compile-time configuration is an ownership-boundary
             # file consumed by the usb_hid adapter, not an implementation
             # module and therefore has no module_for() owner.
-            if path == ROOT / "include" / "tusb_config.h":
+            if path in {
+                ROOT / "include" / "tusb_config.h",
+                ROOT / "include" / "btstack_config.h",
+            }:
                 continue
             result.append(path)
     return result
