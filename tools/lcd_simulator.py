@@ -18,6 +18,15 @@ from tkinter import messagebox
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BACKEND = ROOT / "build-host" / "mbr_lcd_simulator"
 
+BG = "#181818"
+PANEL = "#242424"
+CONTROL = "#303030"
+CONTROL_ACTIVE = "#444444"
+FG = "#f2f2f2"
+MUTED = "#b8b8b8"
+ACCENT = "#7ad7ff"
+ENTRY_BG = "#111111"
+
 KEYS = {
     "Up": "up",
     "Down": "down",
@@ -41,6 +50,8 @@ class Simulator:
         self.root = root
         self.backend = backend
         self.zoom = tk.IntVar(value=zoom)
+        self.brightness = tk.IntVar(value=300)
+        self.brightness_text = tk.StringVar(value="Backlight: 300% • effective: 300%")
         self.mouse_id = tk.StringVar(value="1")
         self.mouse_name = tk.StringVar(value="LOGITECH LIFT")
         self.status = tk.StringVar(value="Starting simulator...")
@@ -62,6 +73,7 @@ class Simulator:
             error = self.process.stderr.read() if self.process.stderr else ""
             raise RuntimeError(f"simulator backend exited early: {error}")
         self.status.set(first)
+        self._sync_backlight_status(first)
 
         self._build_ui()
         self._refresh()
@@ -70,21 +82,62 @@ class Simulator:
         self.root.bind("<KeyRelease>", self._key_up)
         self.root.focus_force()
 
+    def _button(self, parent: tk.Widget, text: str, command=None, *, bold: bool = False) -> tk.Button:
+        return tk.Button(
+            parent,
+            text=text,
+            command=command,
+            bg=CONTROL,
+            fg=FG,
+            activebackground=CONTROL_ACTIVE,
+            activeforeground=FG,
+            disabledforeground=MUTED,
+            highlightthickness=1,
+            highlightbackground="#505050",
+            relief="flat",
+            bd=0,
+            padx=9,
+            pady=7,
+            font=("TkDefaultFont", 11, "bold" if bold else "normal"),
+        )
+
     def _build_ui(self) -> None:
         self.root.title("Mouse Bridge Remapper — Virtual LCD/HAT")
-        self.root.configure(padx=12, pady=12)
+        self.root.configure(bg=BG, padx=12, pady=12)
 
-        top = tk.Frame(self.root)
+        top = tk.Frame(self.root, bg=BG)
         top.pack(fill="x")
-        tk.Label(top, text="Mouse ID", font=("TkDefaultFont", 12)).pack(side="left")
-        tk.Entry(top, textvariable=self.mouse_id, width=5, font=("TkDefaultFont", 12)).pack(side="left", padx=(6, 12))
-        tk.Label(top, text="Mouse name", font=("TkDefaultFont", 12)).pack(side="left")
-        tk.Entry(top, textvariable=self.mouse_name, width=24, font=("TkDefaultFont", 12)).pack(side="left", padx=6)
-        tk.Button(top, text="CONNECT", command=self._connect, font=("TkDefaultFont", 12, "bold")).pack(side="left", padx=4)
-        tk.Button(top, text="DISCONNECT", command=lambda: self.command("disconnect"), font=("TkDefaultFont", 12)).pack(side="left", padx=4)
+        tk.Label(top, text="Mouse ID", bg=BG, fg=FG, font=("TkDefaultFont", 12)).pack(side="left")
+        tk.Entry(
+            top,
+            textvariable=self.mouse_id,
+            width=5,
+            bg=ENTRY_BG,
+            fg=FG,
+            insertbackground=FG,
+            highlightbackground="#555555",
+            highlightcolor=ACCENT,
+            relief="flat",
+            font=("TkDefaultFont", 12),
+        ).pack(side="left", padx=(6, 12), ipady=5)
+        tk.Label(top, text="Mouse name", bg=BG, fg=FG, font=("TkDefaultFont", 12)).pack(side="left")
+        tk.Entry(
+            top,
+            textvariable=self.mouse_name,
+            width=24,
+            bg=ENTRY_BG,
+            fg=FG,
+            insertbackground=FG,
+            highlightbackground="#555555",
+            highlightcolor=ACCENT,
+            relief="flat",
+            font=("TkDefaultFont", 12),
+        ).pack(side="left", padx=6, ipady=5)
+        self._button(top, "CONNECT", self._connect, bold=True).pack(side="left", padx=4)
+        self._button(top, "DISCONNECT", lambda: self.command("disconnect")).pack(side="left", padx=4)
 
-        tools = tk.Frame(self.root)
-        tools.pack(fill="x", pady=(8, 8))
+        tools = tk.Frame(self.root, bg=BG)
+        tools.pack(fill="x", pady=(8, 5))
         for text, command in (
             ("+1 s", "tick 1000"),
             ("+8 s", "tick 8000"),
@@ -93,22 +146,80 @@ class Simulator:
             ("REBOOT", "reboot"),
             ("FACTORY RESET", "factory-reset"),
         ):
-            tk.Button(tools, text=text, command=lambda c=command: self.command(c), font=("TkDefaultFont", 11)).pack(side="left", padx=3)
-        tk.Label(tools, text=" Zoom:", font=("TkDefaultFont", 11)).pack(side="left", padx=(10, 2))
+            self._button(tools, text, lambda c=command: self.command(c)).pack(side="left", padx=3)
+        tk.Label(tools, text=" Zoom:", bg=BG, fg=FG, font=("TkDefaultFont", 11)).pack(side="left", padx=(10, 2))
         for value in (1, 2, 3, 4):
-            tk.Radiobutton(tools, text=f"{value}x", value=value, variable=self.zoom, command=self._refresh).pack(side="left")
+            tk.Radiobutton(
+                tools,
+                text=f"{value}x",
+                value=value,
+                variable=self.zoom,
+                command=self._refresh,
+                bg=BG,
+                fg=FG,
+                activebackground=BG,
+                activeforeground=FG,
+                selectcolor=CONTROL,
+                highlightthickness=0,
+            ).pack(side="left")
 
-        self.image_label = tk.Label(self.root, bd=2, relief="sunken")
+        light = tk.Frame(self.root, bg=PANEL, padx=10, pady=8)
+        light.pack(fill="x", pady=(0, 8))
+        tk.Label(
+            light,
+            text="LCD backlight gain",
+            bg=PANEL,
+            fg=FG,
+            font=("TkDefaultFont", 11, "bold"),
+        ).pack(side="left")
+        self.backlight_scale = tk.Scale(
+            light,
+            from_=0,
+            to=400,
+            resolution=10,
+            orient="horizontal",
+            variable=self.brightness,
+            command=self._brightness_changed,
+            showvalue=False,
+            length=300,
+            bg=PANEL,
+            fg=FG,
+            troughcolor=ENTRY_BG,
+            activebackground=ACCENT,
+            highlightthickness=0,
+            bd=0,
+            sliderrelief="flat",
+        )
+        self.backlight_scale.pack(side="left", padx=10)
+        for value in (100, 200, 300, 400):
+            self._button(light, f"{value}%", lambda v=value: self._set_brightness(v)).pack(side="left", padx=2)
+        tk.Label(
+            light,
+            textvariable=self.brightness_text,
+            bg=PANEL,
+            fg=ACCENT,
+            font=("TkFixedFont", 10, "bold"),
+        ).pack(side="left", padx=(10, 0))
+
+        self.image_label = tk.Label(
+            self.root,
+            bd=2,
+            relief="sunken",
+            bg="#000000",
+            highlightthickness=1,
+            highlightbackground="#555555",
+        )
         self.image_label.pack()
 
-        pad = tk.Frame(self.root)
+        pad = tk.Frame(self.root, bg=BG)
         pad.pack(pady=(10, 4))
         controls = [
             ("↑", "up", 0, 1), ("←", "left", 1, 0), ("JOY", "press", 1, 1), ("→", "right", 1, 2), ("↓", "down", 2, 1),
             ("A", "a", 0, 4), ("B", "b", 1, 4), ("X", "x", 0, 5), ("Y", "y", 1, 5),
         ]
         for label, control, row, col in controls:
-            button = tk.Button(pad, text=label, width=7, height=2, font=("TkDefaultFont", 13, "bold"))
+            button = self._button(pad, label, bold=True)
+            button.configure(width=6, height=2, font=("TkDefaultFont", 13, "bold"))
             button.grid(row=row, column=col, padx=3, pady=3)
             button.bind("<ButtonPress-1>", lambda _e, c=control: self.command(f"down {c}"))
             button.bind("<ButtonRelease-1>", lambda _e, c=control: self.command(f"up {c}"))
@@ -116,9 +227,48 @@ class Simulator:
         tk.Label(
             self.root,
             text="Keyboard: arrows = joystick • Enter/Space = JOY PRESS • A/B/X/Y = HAT keys",
+            bg=BG,
+            fg=MUTED,
             font=("TkDefaultFont", 11),
         ).pack(pady=(6, 2))
-        tk.Label(self.root, textvariable=self.status, anchor="w", justify="left", font=("TkFixedFont", 10)).pack(fill="x", pady=(4, 0))
+        tk.Label(
+            self.root,
+            text="100% = RGB565 digital reference • >100% = virtual backlight gain for color inspection • Lock forces effective 0%",
+            bg=BG,
+            fg=MUTED,
+            font=("TkDefaultFont", 10),
+        ).pack(pady=(0, 2))
+        tk.Label(
+            self.root,
+            textvariable=self.status,
+            anchor="w",
+            justify="left",
+            bg=PANEL,
+            fg=FG,
+            padx=8,
+            pady=6,
+            font=("TkFixedFont", 10),
+        ).pack(fill="x", pady=(4, 0))
+
+    def _set_brightness(self, value: int) -> None:
+        self.brightness.set(value)
+        self.command(f"brightness {value}")
+
+    def _brightness_changed(self, value: str) -> None:
+        gain = max(0, min(400, int(float(value))))
+        self.command(f"brightness {gain}")
+
+    def _sync_backlight_status(self, line: str) -> None:
+        values = {}
+        for token in line.split("\t"):
+            if "=" in token:
+                key, value = token.split("=", 1)
+                values[key] = value
+        gain = values.get("backlight", str(self.brightness.get()))
+        effective = values.get("effective_backlight", gain)
+        locked = values.get("locked", "0") == "1"
+        suffix = " • LOCKED / backlight OFF" if locked else ""
+        self.brightness_text.set(f"Backlight: {gain}% • effective: {effective}%{suffix}")
 
     def _connect(self) -> None:
         try:
@@ -145,6 +295,7 @@ class Simulator:
         line = self.process.stdout.readline().rstrip()
         if line:
             self.status.set(line)
+            self._sync_backlight_status(line)
         self._refresh()
 
     def _refresh(self) -> None:
