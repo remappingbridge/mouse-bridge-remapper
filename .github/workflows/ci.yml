@@ -82,7 +82,7 @@ jobs:
           sha256sum build-pico/mouse_bridge_remapper.uf2 build-pico/mbr_usb_hid_qualification.uf2
           wc -c build-pico/mouse_bridge_remapper.uf2 build-pico/mbr_usb_hid_qualification.uf2
 
-      - name: Upload MBR-03 UF2s
+      - name: Upload MBR-04 UF2s
         uses: actions/upload-artifact@v4
         with:
           name: mbr-04-pico2w-usb-hid-uf2
