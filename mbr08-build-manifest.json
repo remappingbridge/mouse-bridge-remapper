@@ -1,0 +1,44 @@
+{
+  "project": "mouse-bridge-remapper",
+  "branch": "experimental/mbr08-integrated-recovery-20260920",
+  "firmware_source_commit": "f13611d9bc6d28c54250445cbb268271f58c8efa",
+  "base_commit": "7f294a7fac9eebe226ad66c6b572582c5e483421",
+  "gates_implemented": [
+    "mbr-06",
+    "mbr-07",
+    "mbr-08"
+  ],
+  "target": "Raspberry Pi Pico 2 W / RP2350 / CYW43",
+  "build": {
+    "pico_sdk_version": "2.2.0",
+    "pico_sdk_sha": "a1438dff1d38bd9c65dbd693f0e5db4b9ae91779",
+    "btstack_sha": "501e6d2b86e6c92bfb9c390bcf55709938e25ac1",
+    "arm_gcc": "13.2.1",
+    "cmake": "3.28.3",
+    "build_type": "Release"
+  },
+  "verification": {
+    "github_actions_run": 35535454244,
+    "host_tests": "14/14 PASS",
+    "pico2_w_build": "PASS",
+    "uf2_verification": "PASS",
+    "artifact_id": 10612620760,
+    "artifact_archive_sha256": "c96670b4312fb69ed2104f414e98c0e660e896a39cd6e5066efc2b02e0bfc00c"
+  },
+  "production_uf2": {
+    "file": "mouse_bridge_remapper.uf2",
+    "size_bytes": 880640,
+    "sha256": "c9ded48b8c4e61459829eaa8cb2db777d8a2bd246ea57055aeedcde25846427e"
+  },
+  "qualification_uf2": {
+    "file": "mouse_bridge_remapper_qualification.uf2",
+    "size_bytes": 96256,
+    "sha256": "97836b2e2db8670ff8b6ef3759afa37e9a97fb86d1656436f52d24a331e8b2ba"
+  },
+  "physical_acceptance": "PENDING",
+  "notes": [
+    "Exclusive experimental branch; not merged into main or accepted implementation branches.",
+    "MBR-06/07/08 were implemented together under the user's explicit bypass.",
+    "MBR-09 and MBR-10 are outside this candidate."
+  ]
+}
