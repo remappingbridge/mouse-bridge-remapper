@@ -54,9 +54,6 @@ if(MBR_BUILD_PICO)
     )
     target_link_libraries(mbr_impl_usb_hid PUBLIC tinyusb_device)
 
-    target_sources(mbr_impl_bt_runtime PRIVATE
-        src/bt_runtime/bt_runtime_pico.c
-    )
     target_link_libraries(mbr_impl_bt_runtime PRIVATE
         pico_stdlib
         pico_btstack_ble
@@ -64,6 +61,7 @@ if(MBR_BUILD_PICO)
         pico_cyw43_arch_threadsafe_background
     )
     target_compile_definitions(mbr_impl_bt_runtime PUBLIC
+        MBR_PLATFORM_PICO=1
         CYW43_LWIP=0
         PICO_BTSTACK_CYW43_MAX_HCI_PROCESS_LOOP_COUNT=8
     )
