@@ -90,6 +90,8 @@ MBR-02 implements the canonical interaction engine, HOME/search transaction mode
 
 The project still does **not** claim physical renderer/HAT behavior, final USB HID descriptors/reports, live BLE HOGP forwarding, persistent flash state or Logitech HID++ behavior. Those remain owned by later gates.
 
+The connected HOME flow is explicit: the connected Mouse name is the title, `PAIR NEW MOUSE` is the first option, the current remap summary is the second, `SAVED DEVICES` the third and `LEARN THE KEYS` the fourth. `PAIR NEW MOUSE` is the documented visible entry into the existing replacement transaction while the current Mouse remains live.
+
 ## Documentation map
 
 ### User manual
