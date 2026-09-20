@@ -300,6 +300,66 @@ def check_usb_contract() -> None:
         fail("USB HID module must not force re-enumeration")
 
 
+def check_ble_hogp_contract() -> None:
+    header = (ROOT / "include" / "mbr" / "ble_hogp" / "ble_hogp.h").read_text(encoding="utf-8")
+    required = (
+        "MBR_BLE_HOGP_MAX_FIELDS",
+        "MBR_BLE_HOGP_MAX_REPORTS",
+        "MBR_BLE_HOGP_RUNTIME_CHANNEL",
+        "mbr_mouse_event_t",
+        "mbr_mouse_session_id_t",
+        "mbr_ble_hogp_parser_configure",
+        "mbr_ble_hogp_parser_normalize_report",
+        "mbr_ble_hogp_parser_parse_report",
+    )
+    for token in required:
+        if token not in header:
+            fail(f"BLE HOGP contract missing: {token}")
+
+    cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    for token in (
+        "src/bt_runtime/bt_runtime_pico.c",
+        "pico_btstack_ble",
+        "pico_btstack_cyw43",
+        "pico_cyw43_arch_threadsafe_background",
+        "pico_btstack_make_gatt_header",
+        "src/ble_hogp/ble_hogp_pico.c",
+    ):
+        if token not in cmake:
+            fail(f"BLE Pico wiring missing: {token}")
+
+    runtime = (ROOT / "include" / "mbr" / "bt_runtime" / "bt_runtime.h").read_text(encoding="utf-8")
+    for token in (
+        "#define MBR_BT_RUNTIME_MESSAGE_PAYLOAD_SIZE 64u",
+        "#define MBR_BT_RUNTIME_QUEUE_CAPACITY 128u",
+        "mbr_bt_runtime_publish",
+        "mbr_bt_runtime_take_overflow",
+    ):
+        if token not in runtime:
+            fail(f"BT runtime contract missing: {token}")
+
+    pico = (ROOT / "src" / "ble_hogp" / "ble_hogp_pico.c").read_text(encoding="utf-8")
+    for token in (
+        "hids_client_connect",
+        "hids_client_descriptor_storage_get_descriptor_data",
+        "sm_request_pairing",
+        "gap_load_resolving_list_from_le_device_db",
+        "gap_connect_with_whitelist",
+        "BLE_HOGP_BONDED_RECONNECT_TIMEOUT_MS 8000u",
+    ):
+        if token not in pico:
+            fail(f"BLE lifecycle rule missing: {token}")
+
+    config = (ROOT / "include" / "btstack_config.h").read_text(encoding="utf-8")
+    for token in (
+        "#define MAX_NR_HCI_CONNECTIONS 1",
+        "#define MAX_NR_HIDS_CLIENTS 1",
+        "#define MAX_NR_LE_DEVICE_DB_ENTRIES 8",
+    ):
+        if token not in config:
+            fail(f"BTstack resource guard missing: {token}")
+
+
 def main() -> int:
     check_module_graph()
     check_forbidden_scope()
@@ -307,6 +367,7 @@ def main() -> int:
     check_single_authoritative_slot()
     check_production_scaffold()
     check_usb_contract()
+    check_ble_hogp_contract()
     check_toolchain_lock()
     print("MBR-01 architecture contract: PASS")
     return 0
