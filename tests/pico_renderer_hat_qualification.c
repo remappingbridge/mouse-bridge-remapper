@@ -6,7 +6,7 @@
 #include "mbr/mouse_session/mouse_session.h"
 #include "mbr/renderer/renderer.h"
 
-#define QUALIFICATION_HOLD_MS 1800u
+#define QUALIFICATION_HOLD_MS 5000u
 
 static const mbr_screen_id_t k_screens[MBR_SCREEN_COUNT] = {
     MBR_SCREEN_SEARCHING_FIRST,
