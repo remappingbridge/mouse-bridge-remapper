@@ -4,7 +4,7 @@ Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing BLE HOGP 
 
 This repository follows **documentation as product, code as consequence**. The manual and architecture are the product contract; firmware must implement them rather than redefine them.
 
-> Current status: **MBR-03 IMPLEMENTED / PHYSICAL ACCEPTANCE PENDING. The canonical UX is host-golden-tested and the Waveshare ST7789/HAT candidate is built; USB HID and Bluetooth behavior remain later gates.**
+> Current status: **MBR-03 PHYSICAL ACCEPTANCE PENDING; MBR-04 IMPLEMENTED ON A STACKED CANDIDATE. USB HID is physically pending and is not yet accepted/merged.**
 
 ## Product in one paragraph
 
@@ -88,7 +88,7 @@ MBR-01 established the compileable host/Pico 2 W scaffold, frozen module depende
 
 MBR-02 implements the canonical interaction engine, HOME/search transaction model, Pair New candidate/handoff projection, profile/Custom/removal confirmation semantics and semantic UI projector. All 30 canonical screens are golden-tested as host-pure state, including exact literals, dynamic fields, name policy, colors and didactic token columns. See [MBR-02 host-pure UX model](docs/implementation/01-mbr02-host-ux.md).
 
-MBR-03 implements the production ST7789 renderer and debounced HAT input path, plus an isolated non-production qualification firmware for physical screen coverage. See [MBR-03 renderer/HAT implementation](docs/implementation/02-mbr03-renderer-hat.md). Physical acceptance is still pending; final USB HID descriptors/reports, live BLE HOGP forwarding, persistent flash state and Logitech HID++ behavior remain later gates.
+MBR-03 implements the production ST7789 renderer and debounced HAT input path, plus an isolated non-production qualification firmware for physical screen coverage. See [MBR-03 renderer/HAT implementation](docs/implementation/02-mbr03-renderer-hat.md). Physical acceptance is still pending. MBR-04 now implements the fixed USB HID identity/report path on a stacked candidate branch; its physical acceptance is also pending and it is not merged while MBR-03 remains open. Live BLE HOGP forwarding, persistent flash state and Logitech HID++ behavior remain later gates.
 
 The connected HOME flow is explicit: the connected Mouse name is the title, `PAIR NEW MOUSE` is the first option, the current remap summary is the second, `SAVED DEVICES` the third and `LEARN THE KEYS` the fourth. `PAIR NEW MOUSE` is the documented visible entry into the existing replacement transaction while the current Mouse remains live.
 
@@ -121,6 +121,7 @@ The connected HOME flow is explicit: the connected Mouse name is the title, `PAI
 - [MBR-01 bootstrap](docs/implementation/00-mbr01-bootstrap.md)
 - [MBR-02 host UX](docs/implementation/01-mbr02-host-ux.md)
 - [MBR-03 renderer/HAT](docs/implementation/02-mbr03-renderer-hat.md)
+- [MBR-04 USB HID](docs/implementation/03-mbr04-usb-hid.md)
 
 ## Scope boundary
 
@@ -130,3 +131,8 @@ There are no Pair Keyboard, Pair Composite, Bluetooth Keyboard input, Bluetooth 
 ## MBR-03 status
 
 The renderer/HAT implementation is complete on branch `mbr/mbr-03-renderer-hat` automated CI passed; physical acceptance pending. The exact candidate UF2 is produced by CI; the physical qualification firmware cycles all 30 canonical screens and exercises the same renderer/HAT modules without enabling serial or CDC diagnostics.
+
+
+## MBR-04 status
+
+The fixed USB Mouse + synthetic Escape implementation is prepared on the stacked branch `mbr/mbr-04-usb-hid`. It adds the exact frozen USB identity, two fixed HID interfaces, canonical report builders, TinyUSB ownership boundaries and an isolated physical qualification firmware. The candidate is not accepted or merged until the predecessor MBR-03 physical gate is closed and the MBR-04 numbered hardware scenarios pass.
