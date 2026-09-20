@@ -18,6 +18,15 @@ from tkinter import messagebox
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BACKEND = ROOT / "build-host" / "mbr_lcd_simulator"
 
+SCALE_FACTORS = {
+    75: (3, 4),
+    100: (1, 1),
+    125: (5, 4),
+    150: (3, 2),
+    200: (2, 1),
+    300: (3, 1),
+}
+
 BG = "#181818"
 PANEL = "#242424"
 CONTROL = "#303030"
@@ -46,10 +55,10 @@ KEYS = {
 
 
 class Simulator:
-    def __init__(self, root: tk.Tk, backend: Path, zoom: int) -> None:
+    def __init__(self, root: tk.Tk, backend: Path, scale_percent: int) -> None:
         self.root = root
         self.backend = backend
-        self.zoom = tk.IntVar(value=zoom)
+        self.scale_percent = tk.IntVar(value=scale_percent)
         self.brightness = tk.IntVar(value=300)
         self.brightness_text = tk.StringVar(value="Backlight: 300% • effective: 300%")
         self.mouse_id = tk.StringVar(value="1")
@@ -147,13 +156,13 @@ class Simulator:
             ("FACTORY RESET", "factory-reset"),
         ):
             self._button(tools, text, lambda c=command: self.command(c)).pack(side="left", padx=3)
-        tk.Label(tools, text=" Zoom:", bg=BG, fg=FG, font=("TkDefaultFont", 11)).pack(side="left", padx=(10, 2))
-        for value in (1, 2, 3, 4):
+        tk.Label(tools, text=" Scale:", bg=BG, fg=FG, font=("TkDefaultFont", 11)).pack(side="left", padx=(10, 2))
+        for value in SCALE_FACTORS:
             tk.Radiobutton(
                 tools,
-                text=f"{value}x",
+                text=f"{value}%",
                 value=value,
-                variable=self.zoom,
+                variable=self.scale_percent,
                 command=self._refresh,
                 bg=BG,
                 fg=FG,
@@ -175,13 +184,13 @@ class Simulator:
         self.backlight_scale = tk.Scale(
             light,
             from_=0,
-            to=400,
+            to=1000,
             resolution=10,
             orient="horizontal",
             variable=self.brightness,
             command=self._brightness_changed,
             showvalue=False,
-            length=300,
+            length=420,
             bg=PANEL,
             fg=FG,
             troughcolor=ENTRY_BG,
@@ -191,7 +200,7 @@ class Simulator:
             sliderrelief="flat",
         )
         self.backlight_scale.pack(side="left", padx=10)
-        for value in (100, 200, 300, 400):
+        for value in (100, 300, 500, 750, 1000):
             self._button(light, f"{value}%", lambda v=value: self._set_brightness(v)).pack(side="left", padx=2)
         tk.Label(
             light,
@@ -255,7 +264,7 @@ class Simulator:
         self.command(f"brightness {value}")
 
     def _brightness_changed(self, value: str) -> None:
-        gain = max(0, min(400, int(float(value))))
+        gain = max(0, min(1000, int(float(value))))
         self.command(f"brightness {gain}")
 
     def _sync_backlight_status(self, line: str) -> None:
@@ -302,9 +311,12 @@ class Simulator:
         if not self.frame.exists():
             return
         image = tk.PhotoImage(file=str(self.frame))
-        z = self.zoom.get()
-        if z > 1:
-            image = image.zoom(z, z)
+        scale = self.scale_percent.get()
+        numerator, denominator = SCALE_FACTORS.get(scale, SCALE_FACTORS[300])
+        if numerator != 1:
+            image = image.zoom(numerator, numerator)
+        if denominator != 1:
+            image = image.subsample(denominator, denominator)
         self._photo = image
         self.image_label.configure(image=image)
 
@@ -339,7 +351,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--backend", type=Path, default=DEFAULT_BACKEND)
     parser.add_argument("--build", action="store_true", help="build the C backend before opening the window")
-    parser.add_argument("--zoom", type=int, choices=(1, 2, 3, 4), default=3)
+    parser.add_argument("--scale", type=int, choices=tuple(SCALE_FACTORS), default=300, help="initial LCD display scale in percent")
     args = parser.parse_args()
 
     if args.build:
@@ -352,7 +364,7 @@ def main() -> int:
 
     root = tk.Tk()
     try:
-        Simulator(root, backend, args.zoom)
+        Simulator(root, backend, args.scale)
     except Exception as exc:
         root.destroy()
         print(f"Simulator startup failed: {exc}", file=sys.stderr)
