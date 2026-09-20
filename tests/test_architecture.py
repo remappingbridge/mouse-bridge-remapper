@@ -61,8 +61,14 @@ def source_files() -> list[Path]:
         if not base.exists():
             continue
         for path in base.rglob("*"):
-            if path.is_file() and path.suffix.lower() in {".c", ".h", ".cc", ".cpp", ".hpp"}:
-                result.append(path)
+            if not path.is_file() or path.suffix.lower() not in {".c", ".h", ".cc", ".cpp", ".hpp"}:
+                continue
+            # TinyUSB's compile-time configuration is an ownership-boundary
+            # file consumed by the usb_hid adapter, not an implementation
+            # module and therefore has no module_for() owner.
+            if path == ROOT / "include" / "tusb_config.h":
+                continue
+            result.append(path)
     return result
 
 
@@ -201,7 +207,7 @@ def check_production_scaffold() -> None:
 
     executable_names = re.findall(r"add_executable\s*\(\s*([A-Za-z0-9_.-]+)", cmake)
     firmware_names = [name for name in executable_names if not name.startswith("mbr_test_")]
-    allowed = {"mouse_bridge_remapper", "mbr_renderer_hat_qualification"}
+    allowed = {"mouse_bridge_remapper", "mbr_renderer_hat_qualification", "mbr_usb_hid_qualification"}
     unexpected = [name for name in firmware_names if name not in allowed]
     if unexpected:
         fail(f"unexpected firmware executable targets: {unexpected}")
@@ -227,12 +233,80 @@ def check_toolchain_lock() -> None:
         fail(f"toolchain lock differs from MBR-01 baseline: {values}")
 
 
+
+def check_usb_contract() -> None:
+    header = (ROOT / "include" / "mbr" / "usb_hid" / "usb_hid.h").read_text(encoding="utf-8")
+    required_header = (
+        "#define MBR_USB_HID_VID UINT16_C(0xcafe)",
+        "#define MBR_USB_HID_PID UINT16_C(0x4011)",
+        "#define MBR_USB_HID_BCD_DEVICE UINT16_C(0x0100)",
+        "#define MBR_USB_HID_INTERFACE_COUNT 2u",
+        "#define MBR_USB_HID_MOUSE_INTERFACE 0u",
+        "#define MBR_USB_HID_KEYBOARD_INTERFACE 1u",
+        '#define MBR_USB_HID_MANUFACTURER "tiagooliveirajs"',
+        '#define MBR_USB_HID_PRODUCT "Mouse Bridge Remapper"',
+        "#define MBR_USB_HID_KEY_ESCAPE 0x29u",
+    )
+    for token in required_header:
+        if token not in header:
+            fail(f"USB identity/report contract missing: {token}")
+
+    config = (ROOT / "include" / "tusb_config.h").read_text(encoding="utf-8")
+    for token in (
+        "#define CFG_TUD_HID 2",
+        "#define CFG_TUD_CDC 0",
+        "#define CFG_TUD_MSC 0",
+        "#define CFG_TUD_MIDI 0",
+        "#define CFG_TUD_VENDOR 0",
+    ):
+        if token not in config:
+            fail(f"TinyUSB forbidden-interface guard missing: {token}")
+
+    descriptors = (ROOT / "src" / "usb_hid" / "usb_descriptors.c").read_text(encoding="utf-8")
+    for token in (
+        "TUD_HID_REPORT_DESC_MOUSE()",
+        "TUD_HID_REPORT_DESC_KEYBOARD()",
+        "HID_ITF_PROTOCOL_MOUSE",
+        "HID_ITF_PROTOCOL_KEYBOARD",
+        "EPNUM_MOUSE 0x81u",
+        "EPNUM_KEYBOARD 0x82u",
+        ".iSerialNumber = 0x00",
+        "MBR_USB_HID_PID",
+        "MBR_USB_HID_MANUFACTURER",
+        "MBR_USB_HID_PRODUCT",
+    ):
+        if token not in descriptors:
+            fail(f"USB descriptor contract missing: {token}")
+
+    descriptor_callbacks = {
+        "tud_descriptor_device_cb",
+        "tud_descriptor_configuration_cb",
+        "tud_descriptor_string_cb",
+        "tud_hid_descriptor_report_cb",
+    }
+    for callback in descriptor_callbacks:
+        matches = 0
+        for path in source_files():
+            text = path.read_text(encoding="utf-8")
+            matches += len(re.findall(rf"\b{re.escape(callback)}\s*\(", text))
+        if matches != 1:
+            fail(f"USB descriptor callback must have exactly one owner: {callback}")
+
+    combined = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (ROOT / "src" / "usb_hid").glob("*.c")
+    )
+    if re.search(r"\btud_(?:disconnect|connect)\s*\(", combined):
+        fail("USB HID module must not force re-enumeration")
+
+
 def main() -> int:
     check_module_graph()
     check_forbidden_scope()
     check_source_boundaries()
     check_single_authoritative_slot()
     check_production_scaffold()
+    check_usb_contract()
     check_toolchain_lock()
     print("MBR-01 architecture contract: PASS")
     return 0

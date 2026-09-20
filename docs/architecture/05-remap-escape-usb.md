@@ -1,6 +1,6 @@
 # Remap, Escape and USB contract
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; IMPLEMENTED BY MBR-04 CANDIDATE**.
 
 ## Pure remap core
 
@@ -97,3 +97,17 @@ Persistent button/Escape state cannot be discarded because an endpoint is tempor
 ## Logitech HID++
 
 HID++ operates upstream of canonical remap output. Supported Forward diversion must preserve real down/hold/up. Passthrough removes unnecessary diversion. Unsupported peers fall back safely to Standard HOGP input.
+
+
+## MBR-04 implementation boundary
+
+The candidate implementation places every TinyUSB primitive inside `usb_hid`. The host-pure side exposes the fixed identity and pure builders from canonical `mbr_output_state_t`; the Pico side owns `tud_init`, `tud_task`, descriptor callbacks and HID report submission.
+
+The fixed descriptor exposes exactly two HID interfaces:
+
+- interface 0: Mouse, five buttons + X/Y/wheel/pan;
+- interface 1: boot-style Keyboard, used by product logic only for synthetic Escape.
+
+USB strings are fixed to `tiagooliveirajs` and `Mouse Bridge Remapper`; no serial string is emitted. TinyUSB CDC/MSC/MIDI/vendor classes are disabled. The product never calls forced USB disconnect/reconnect.
+
+The MBR-04 qualification firmware is isolated from production and exercises report fixtures plus live Escape press/release from the HAT.

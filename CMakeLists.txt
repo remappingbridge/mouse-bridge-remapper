@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 option(MBR_BUILD_PICO "Build Raspberry Pi Pico 2 W production scaffold" OFF)
 option(MBR_BUILD_TESTS "Build host tests" ON)
 option(MBR_BUILD_PICO_QUALIFICATION "Build the MBR-03 renderer/HAT qualification firmware" OFF)
+option(MBR_BUILD_USB_HID_QUALIFICATION "Build the MBR-04 USB HID qualification firmware" OFF)
 
 if(MBR_BUILD_PICO)
     if((NOT DEFINED PICO_SDK_PATH OR PICO_SDK_PATH STREQUAL "") AND
@@ -46,6 +47,12 @@ if(MBR_BUILD_PICO)
     target_compile_definitions(mbr_impl_hat PRIVATE MBR_PLATFORM_PICO=1)
     target_link_libraries(mbr_impl_renderer PUBLIC pico_stdlib hardware_gpio hardware_spi)
     target_link_libraries(mbr_impl_hat PUBLIC pico_stdlib hardware_gpio)
+
+    target_sources(mbr_impl_usb_hid PRIVATE
+        src/usb_hid/usb_hid_pico.c
+        src/usb_hid/usb_descriptors.c
+    )
+    target_link_libraries(mbr_impl_usb_hid PUBLIC tinyusb_device)
 endif()
 
 target_compile_definitions(mbr_impl_domain PUBLIC MBR_VERSION_STRING="0.1.0-mbr01")
@@ -70,6 +77,10 @@ if(MBR_BUILD_TESTS)
     target_link_libraries(mbr_test_renderer PRIVATE mbr_module_app)
     add_test(NAME renderer_hat_contract COMMAND mbr_test_renderer)
 
+    add_executable(mbr_test_usb_hid tests/test_usb_hid.c)
+    target_link_libraries(mbr_test_usb_hid PRIVATE mbr_module_usb_hid)
+    add_test(NAME usb_hid_contract COMMAND mbr_test_usb_hid)
+
     add_test(
         NAME architecture_contract
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_architecture.py
@@ -84,6 +95,14 @@ if(MBR_BUILD_PICO)
     pico_enable_stdio_usb(mouse_bridge_remapper 0)
     pico_enable_stdio_uart(mouse_bridge_remapper 0)
     pico_add_extra_outputs(mouse_bridge_remapper)
+endif()
+
+if(MBR_BUILD_PICO AND MBR_BUILD_USB_HID_QUALIFICATION)
+    add_executable(mbr_usb_hid_qualification tests/pico_usb_hid_qualification.c)
+    target_link_libraries(mbr_usb_hid_qualification PRIVATE pico_stdlib mbr_module_usb_hid mbr_module_hat)
+    pico_enable_stdio_usb(mbr_usb_hid_qualification 0)
+    pico_enable_stdio_uart(mbr_usb_hid_qualification 0)
+    pico_add_extra_outputs(mbr_usb_hid_qualification)
 endif()
 
 if(MBR_BUILD_PICO AND MBR_BUILD_PICO_QUALIFICATION)
