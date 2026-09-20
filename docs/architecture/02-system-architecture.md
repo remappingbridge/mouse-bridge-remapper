@@ -99,6 +99,10 @@ Interaction emits semantic release actions; projector maps application state to 
 ### `application`
 Composition/orchestration only; never a second raw owner of BTstack, TinyUSB, GPIO/SPI or flash.
 
+## Connected HOME projection and entry
+
+`home-connected` is the live-Mouse HOME state. Its title is the current connected Mouse name, followed by four visible options: Pair New, current remap summary, Saved Devices and Learn the Keys. Pair New is a semantic navigation request only; it does not disconnect the current Mouse. The existing authoritative session remains active until replacement handoff.
+
 ## Unified HOME resolver
 
 ```text
