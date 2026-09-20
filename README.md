@@ -4,7 +4,7 @@ Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing BLE HOGP 
 
 This repository follows **documentation as product, code as consequence**. The manual and architecture are the product contract; firmware must implement them rather than redefine them.
 
-> Current status: **RESET TO CLEAN DOCUMENTATION-ONLY BASELINE. All MBR gates are BACKLOG.** The historical implementation records remain in documentation; implementation code and gate branches are no longer the active baseline.*
+> Current status: **RESET TO CLEAN DOCUMENTATION-ONLY BASELINE. All MBR gates are BACKLOG.** The historical implementation records remain in documentation; implementation code and gate branches are no longer the active baseline.
 
 ## Product in one paragraph
 
