@@ -102,6 +102,8 @@ def check_forbidden_scope() -> None:
         "focused_mouse_id",
         "connected_mouse_count",
         "max_connected_mice",
+        "pico_multicore",
+        "multicore_launch_core1",
     )
     for token in forbidden:
         if token in combined:
@@ -113,6 +115,11 @@ def check_source_boundaries() -> None:
     macro_interception = re.compile(r'^\s*#\s*define\s+(?:tud_|hids_|gap_|sm_|cyw43_|gpio_|spi_|flash_range_)', re.M)
     platform_token = re.compile(r'(?:pico/|hardware/|btstack|cyw43|tusb\.h|tinyusb|\btud_)', re.I)
     bt_token = re.compile(r'(?:btstack|cyw43|\bhci_|\bhids_|\bgap_|\bsm_)', re.I)
+    bt_lifecycle_token = re.compile(
+        r'(?:\bcyw43_arch_(?:init|deinit)\b|\bhci_power_control\b|\bhci_add_event_handler\b|'
+        r'\bbtstack_memory_init\b|\bbtstack_run_loop_(?:init|execute)\b)',
+        re.I,
+    )
     tinyusb_token = re.compile(r'(?:tusb\.h|tinyusb|\btud_)', re.I)
     gpio_spi_token = re.compile(r'(?:hardware/(?:gpio|spi)|\bgpio_(?:init|put|get|set)|\bspi_(?:init|write|read))', re.I)
     flash_token = re.compile(r'(?:hardware/flash|\bflash_range_(?:erase|program))', re.I)
@@ -132,6 +139,8 @@ def check_source_boundaries() -> None:
             fail(f"host-pure module leaks platform/transport dependency: {rel}")
         if bt_token.search(text) and module not in BT_ALLOWED:
             fail(f"Bluetooth runtime primitive leaked outside adapter/runtime boundary: {rel}")
+        if bt_lifecycle_token.search(text) and module != "bt_runtime":
+            fail(f"CYW43/BTstack lifecycle ownership leaked outside bt_runtime: {rel}")
         if tinyusb_token.search(text) and module not in TINYUSB_ALLOWED:
             fail(f"TinyUSB ownership leaked outside usb_hid: {rel}")
         if gpio_spi_token.search(text) and module not in GPIO_SPI_ALLOWED:
@@ -189,6 +198,11 @@ def check_production_scaffold() -> None:
     for label, pattern in prohibited.items():
         if re.search(pattern, combined, re.I):
             fail(f"production scaffold prohibition violated: {label}")
+
+    executable_names = re.findall(r"add_executable\s*\(\s*([A-Za-z0-9_.-]+)", cmake)
+    firmware_names = [name for name in executable_names if not name.startswith("mbr_test_")]
+    if firmware_names != ["mouse_bridge_remapper"]:
+        fail(f"unexpected production firmware executable targets: {firmware_names}")
 
 
 def check_toolchain_lock() -> None:
