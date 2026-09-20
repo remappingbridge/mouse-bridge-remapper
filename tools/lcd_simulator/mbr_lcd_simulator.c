@@ -249,8 +249,8 @@ static const char *execute(char *line)
         errno = 0;
         char *end = NULL;
         const unsigned long gain = strtoul(arg, &end, 10);
-        if (errno != 0 || end == arg || *skip_space(end) != '\0' || gain > 400u)
-            return "ERR brightness-must-be-0-to-400";
+        if (errno != 0 || end == arg || *skip_space(end) != '\0' || gain > 1000u)
+            return "ERR brightness-must-be-0-to-1000";
         backlight_gain_percent = (unsigned)gain;
         return "OK";
     }
@@ -293,7 +293,9 @@ static int smoke_test(void)
     assert(apply_backlight(8u, 100u) == 8u);
     assert(apply_backlight(8u, 300u) == 24u);
     assert(apply_backlight(200u, 200u) == 255u);
-    assert(apply_backlight(0u, 400u) == 0u);
+    assert(apply_backlight(0u, 1000u) == 0u);
+    assert(apply_backlight(8u, 1000u) == 80u);
+    assert(apply_backlight(30u, 1000u) == 255u);
     assert(effective_backlight_percent() == 300u);
     assert(connect_mouse(1u, "LOGITECH LIFT"));
     assert(app.screen == MBR_SCREEN_FIRST_MOUSE_CONNECTED);
