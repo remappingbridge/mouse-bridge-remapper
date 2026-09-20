@@ -468,6 +468,25 @@ bool mbr_ux_saved_mouse_ready(mbr_ux_model_t *model,
     return true;
 }
 
+bool mbr_ux_mouse_reconnected(mbr_ux_model_t *model,
+                              mbr_mouse_id_t mouse_id,
+                              mbr_mouse_session_id_t session_id)
+{
+    if (model == NULL || model->live.occupied ||
+        mbr_mouse_registry_find(&model->registry, mouse_id) == NULL ||
+        !mbr_mouse_id_equal(mouse_id, session_id.mouse_id)) return false;
+    if (model->pairing.active && model->pairing.purpose != MBR_SEARCH_SAVED)
+        return false;
+    mbr_mouse_session_slot_clear(&model->live);
+    if (!mbr_mouse_session_slot_promote(&model->live, session_id)) return false;
+    if (model->pairing.active)
+        mbr_pairing_coordinator_stop(&model->pairing);
+    if (model->screen == MBR_SCREEN_HOME_SEARCHING ||
+        model->screen == MBR_SCREEN_HOME_RETRY)
+        set_screen(model, MBR_SCREEN_HOME_CONNECTED);
+    return true;
+}
+
 bool mbr_ux_pair_new_candidate_ready(mbr_ux_model_t *model,
                                      uint32_t transaction_id,
                                      mbr_mouse_id_t mouse_id,
