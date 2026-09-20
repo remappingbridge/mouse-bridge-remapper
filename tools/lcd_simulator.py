@@ -11,9 +11,14 @@ import argparse
 import subprocess
 import sys
 import tempfile
-import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox
+
+try:
+    import tkinter as tk
+    from tkinter import messagebox
+except ModuleNotFoundError:
+    tk = None
+    messagebox = None
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_BACKEND = ROOT / "build-host" / "mbr_lcd_simulator"
@@ -378,6 +383,10 @@ def main() -> int:
 
     if args.self_test:
         return self_test()
+
+    if tk is None or messagebox is None:
+        print("Tkinter is required for the GUI. On Debian: sudo apt install python3-tk", file=sys.stderr)
+        return 2
 
     if args.build:
         build_backend()
