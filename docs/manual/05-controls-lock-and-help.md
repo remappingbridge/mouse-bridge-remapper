@@ -1,6 +1,6 @@
 # Controls, lock and help
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 Mouse Bridge Remapper uses the Waveshare Pico-LCD-1.3 HAT joystick and keys as its local control surface.
 
