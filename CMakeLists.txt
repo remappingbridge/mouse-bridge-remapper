@@ -126,7 +126,11 @@ endif()
 
 if(MBR_BUILD_PICO)
     add_executable(mouse_bridge_remapper src/app/main.c)
-    target_link_libraries(mouse_bridge_remapper PRIVATE pico_stdlib mbr_module_app)
+    target_link_libraries(mouse_bridge_remapper PRIVATE
+        pico_stdlib
+        mbr_module_app
+        mbr_impl_bt_runtime
+    )
 
     pico_enable_stdio_usb(mouse_bridge_remapper 0)
     pico_enable_stdio_uart(mouse_bridge_remapper 0)
