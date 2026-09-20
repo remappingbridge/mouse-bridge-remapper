@@ -1,4 +1,6 @@
-build-host/
-build-pico/
+build*/
+*.uf2
+*.elf
+*.bin
+*.map
 __pycache__/
-*.pyc

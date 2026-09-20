@@ -136,3 +136,25 @@ MBR-03 was implemented on branch `mbr/mbr-03-renderer-hat` and its historical au
 ## MBR-04 historical status
 
 MBR-04 was implemented on the historical branch `mbr/mbr-04-usb-hid`. Its fixed USB identity, two HID interfaces and qualification firmware are retained as documentation/history only; the implementation is not present in the reset product baseline.
+
+## Clean MBR-00 through MBR-04 implementation
+
+The clean rebuild lives on `mbr/rebuild-00-through-04`. It implements host-pure UX, all 30 canonical screens, the Waveshare display/HAT, and fixed USB Mouse + synthetic Escape. Physical validation is deferred by explicit user authorization, not marked PASS. Real BLE forwarding begins in MBR-05.
+
+Build on Ubuntu 24.04 with CMake and the versions in `ci/toolchain.env`:
+
+```sh
+cmake -S . -B build-host -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-host --parallel
+ctest --test-dir build-host --output-on-failure
+
+export PICO_SDK_PATH=/path/to/pico-sdk-2.2.0
+# Initialize the pinned SDK's lib/tinyusb submodule before building.
+cmake -S . -B build-pico -DMBR_BUILD_PICO=ON -DPICO_BOARD=pico2_w -DCMAKE_BUILD_TYPE=Release
+cmake --build build-pico --parallel
+python3 tools/verify_uf2.py build-pico/*.uf2
+```
+
+Outputs: `build-pico/mouse_bridge_remapper.uf2` and `build-pico/mouse_bridge_remapper_qualification.uf2`. The qualification image has an explicit RAM-fixture menu and USB output tests; it is compiled separately and is not the product runtime.
+
+See [manual scenarios in Portuguese](docs/implementation/05-testes-manuais-mbr04.md) and [clean rebuild evidence](docs/implementation/04-rebuild-00-04.md). Historical implementation documents describe the pre-reset attempt; current rebuild evidence takes precedence for what this branch actually implements.
