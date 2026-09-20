@@ -128,6 +128,10 @@ The connected HOME flow is explicit: the connected Mouse name is the title, `PAI
 There are no Pair Keyboard, Pair Composite, Bluetooth Keyboard input, Bluetooth Composite product, or simultaneous-live-Mouse features. Synthetic USB Escape does not reopen those scopes.
 
 
+## MBR-05 status
+
+The BLE HOGP Mouse transport is implemented on `mbr/mbr-05-ble-hogp-mouse`. It owns the Pico CYW43/BTstack path, HIDS discovery/security, Report Map parsing, canonical Mouse events, session-qualified runtime events and disconnect/overflow output cleanup. Physical acceptance is pending.
+
 ## MBR-03 status
 
 The renderer/HAT implementation is complete on branch `mbr/mbr-03-renderer-hat` automated CI passed; physical acceptance pending. The exact candidate UF2 is produced by CI; the physical qualification firmware cycles all 30 canonical screens and exercises the same renderer/HAT modules without enabling serial or CDC diagnostics.
