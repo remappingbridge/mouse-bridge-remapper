@@ -1,6 +1,6 @@
 # Home and connection lifecycle
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 Mouse Bridge Remapper may keep many saved mice but has exactly one authoritative live Mouse slot.
 
