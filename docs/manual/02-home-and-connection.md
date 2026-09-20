@@ -51,6 +51,10 @@ With saved records and no live Mouse, HOME becomes `home-searching` and starts t
 
 There is no separate hidden infinite reconnect state machine.
 
+## Pair New from connected HOME
+
+`PAIR NEW MOUSE` is now a direct visible path from `home-connected` into `pair-new`. The current Mouse remains authoritative and usable while the new-only search qualifies an unsaved replacement candidate.
+
 ## Saved-device search
 
 ```text
