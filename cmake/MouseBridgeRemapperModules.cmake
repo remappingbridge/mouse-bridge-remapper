@@ -38,7 +38,7 @@ set(MBR_DEPS_interaction "domain")
 set(MBR_DEPS_ui_projector "domain;mouse_registry;mouse_session;profiles;pairing_coordinator;interaction")
 set(MBR_DEPS_renderer "ui_projector")
 set(MBR_DEPS_hat "domain")
-set(MBR_DEPS_app "domain;mouse_registry;mouse_session;output_state;profiles;remap;pairing_coordinator;bt_runtime;ble_hogp;logitech_hidpp;product_storage;usb_hid;interaction;ui_projector;renderer;hat")
+set(MBR_DEPS_app "domain;mouse_registry;mouse_session;output_state;profiles;remap;pairing_coordinator;ble_hogp;logitech_hidpp;product_storage;usb_hid;interaction;ui_projector;renderer;hat;bt_runtime")
 
 function(mbr_declare_contract_modules)
     foreach(module IN LISTS MBR_MODULES)
