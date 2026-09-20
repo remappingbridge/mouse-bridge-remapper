@@ -11,15 +11,18 @@ static int16_t saturating_add(int16_t current, int16_t delta)
     return (int16_t)sum;
 }
 
-static bool consume_component(int16_t *pending, int16_t value)
+static bool component_can_consume(int16_t pending, int16_t value)
 {
-    if (pending == NULL || value == 0) return true;
-    if (*pending == 0) return false;
-    if ((*pending > 0 && value < 0) || (*pending < 0 && value > 0)) return false;
-    if ((uint16_t)(*pending > 0 ? *pending : -*pending) <
-        (uint16_t)(value > 0 ? value : -value)) return false;
-    *pending = (int16_t)(*pending - value);
-    return true;
+    if (value == 0) return true;
+    if (pending == 0) return false;
+    if ((pending > 0 && value < 0) || (pending < 0 && value > 0)) return false;
+    return (uint16_t)(pending > 0 ? pending : -pending) >=
+           (uint16_t)(value > 0 ? value : -value);
+}
+
+static void consume_component(int16_t *pending, int16_t value)
+{
+    if (pending != NULL) *pending = (int16_t)(*pending - value);
 }
 
 void mbr_output_state_clear(mbr_output_state_t *state)
@@ -74,10 +77,14 @@ bool mbr_output_state_consume_relative(mbr_output_state_t *state,
                                        int16_t wheel,
                                        int16_t pan)
 {
-    if (state == NULL) return false;
-    if (!consume_component(&state->x, x) ||
-        !consume_component(&state->y, y) ||
-        !consume_component(&state->wheel, wheel) ||
-        !consume_component(&state->pan, pan)) return false;
+    if (state == NULL ||
+        !component_can_consume(state->x, x) ||
+        !component_can_consume(state->y, y) ||
+        !component_can_consume(state->wheel, wheel) ||
+        !component_can_consume(state->pan, pan)) return false;
+    consume_component(&state->x, x);
+    consume_component(&state->y, y);
+    consume_component(&state->wheel, wheel);
+    consume_component(&state->pan, pan);
     return true;
 }
