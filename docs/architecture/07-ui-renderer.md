@@ -1,6 +1,6 @@
 # UI and renderer contract
 
-Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 AND HOME-SEARCHING HELP DECISIONS 2026-09-20; MBR-03 IMPLEMENTED**.
 
 ## Hardware baseline
 
@@ -17,6 +17,37 @@ Inherited physical baseline:
 - final standard hint y=214, bottom anchored;
 - dark-magenta hint region starts 11 px above first visible hint;
 - didactic screens use the exact frozen token columns in the canonical screen reference.
+
+## Physical renderer implementation
+
+The Pico implementation uses SPI1 with the Waveshare Pico-LCD-1.3 pin contract:
+
+- SCK GPIO10;
+- MOSI GPIO11;
+- CS GPIO9;
+- DC GPIO8;
+- RST GPIO12;
+- backlight GPIO13.
+
+The ST7789 initialization and RGB565 write path are adapted from the accepted BLU2USB G03/G06 implementation. The renderer owns these GPIO/SPI primitives; `ui_projector` remains host-pure.
+
+The HAT input map is active-low:
+
+- JOY UP GPIO2;
+- JOY PRESS GPIO3;
+- JOY LEFT GPIO16;
+- JOY RIGHT GPIO20;
+- JOY DOWN GPIO18;
+- KEY A GPIO15;
+- KEY B GPIO17;
+- KEY X GPIO19;
+- KEY Y GPIO21.
+
+Physical HAT scanning is 1 ms with 20 ms debounce and a bounded 32-event queue. Application actions remain release-triggered.
+
+The glyph source is the frozen 5x7 font scaled 2x. The MBR renderer additionally provides comma and parenthesis glyphs because current canonical Help text contains those characters.
+
+A non-production qualification firmware target can cycle all 30 canonical screens without adding a diagnostic interface to the production firmware.
 
 ## Semantic width and dynamic names
 
@@ -56,6 +87,22 @@ Pair New may coexist with the existing authoritative Mouse during discovery. The
 The UI must therefore not project a false disconnect merely because Pair New began. If a candidate becomes replacement-ready and handoff commits, the old session is released/disconnected before the new one is projected as authoritative.
 
 If Pair New times out/cancels before handoff, the original Mouse remains live. If the user manually unplugs it, the Pair New/help page may remain visible, but future HOME access resolves to saved search.
+
+## Frozen Help
+
+All Help literals, including the amended `home-searching-help`, are rendered exactly from the canonical screen reference. The current `home-searching-help` is:
+
+```text
+HOME SEARCHING HELP
+THE MATCHING ATTEMPT
+TOOK PLACE ONLY FOR
+DEVICES ALREADY SAVED
+IN THE PREFERENCES,
+BUT NOT FOR DEVICES
+THAT WERE NOT SAVED.
+
+ANY KEY: BACK
+```
 
 ## Frozen Pair New Help
 
