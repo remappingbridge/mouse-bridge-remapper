@@ -1,6 +1,6 @@
 # Product contract
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 ## Purpose
 
