@@ -79,9 +79,9 @@ CI uses exact PR HEAD (not its synthetic merge ref), pinned SDK 2.2.0 SHA
 `a1438dff1d38bd9c65dbd693f0e5db4b9ae91779`, BTstack submodule
 `501e6d2b86e6c92bfb9c390bcf55709938e25ac1`, GCC package
 `15:13.2.rel1-2`, `pico2_w`, Release. It builds and verifies both UF2s.
-Final commit/run/artifact/hash evidence is recorded in the planner execution
-`mouse-bridge-remapper/executions/rebuild-mbr-05/candidate-evidence.md`.
-Only the operator may close physical MBR-05. MBR-06 remains blocked until then.
+Exact candidate head: `7724de294787b33d452616b2cd9124a5199e4419`. GitHub Actions run `35509056712` is green: 10/10 host tests passed and the Pico 2 W production/qualification build plus UF2 verification passed. Actions artifact ID `10604858272`, archive SHA-256 `9ce6d1b0809f0be1c1b78cc57092ac53480291762d86fda15327f2bbcdef0b21`. Production UF2 is 861696 bytes, SHA-256 `be40b08c473c06f558b9769a661a8f197f10d3cea403e5a8b82ff21dd297b3d8`; qualification UF2 is 95744 bytes, SHA-256 `fd8bb312bd13549ef28c60803e0ee9b483e21329cb9d81b1450510b760960df6`.
+
+The durable mirror is recorded in planner execution `mouse-bridge-remapper/executions/rebuild-mbr-05/candidate-evidence.md`. Only the operator may close physical MBR-05. MBR-06 remains blocked until then.
 
 Local ASan/UBSan passes with `ASAN_OPTIONS=detect_leaks=0`; LeakSanitizer itself
 cannot run under this workspace tracer. Firmware core uses no dynamic allocation.
