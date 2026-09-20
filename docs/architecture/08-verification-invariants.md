@@ -125,3 +125,17 @@ Preserve:
 ## Evidence discipline
 
 A build proves compilation only. Physical behavior—BLE pairing/reconnect, replacement handoff, held-state cleanup, HAT/display placement, timeout behavior, HID++ and USB enumeration—requires physical evidence at the gates that explicitly require it. MBR-00 itself requires no build, UF2 or physical test.
+
+
+## USB/HID invariants
+
+1. The USB device identity is exactly VID `0xCAFE`, PID `0x4011`, bcdDevice `0x0100`.
+2. Manufacturer/product are exactly `tiagooliveirajs` / `Mouse Bridge Remapper`; no serial string is present.
+3. Interface 0 is the Mouse HID and interface 1 is the minimal Keyboard HID used only for synthetic Escape.
+4. The Mouse report is five bytes: five button bits, X, Y, wheel and horizontal pan.
+5. The Keyboard report is eight bytes and emits only HID Escape (`0x29`) from the canonical Escape state.
+6. Report builders are host-pure and consume only canonical `mbr_output_state_t`; no TinyUSB, BLE or GPIO dependency leaks into them.
+7. `usb_hid` is the sole TinyUSB owner and no production path forces USB re-enumeration.
+8. Production USB/UART stdio and diagnostic CDC remain disabled.
+9. Bluetooth connection, profile, UI and lock state cannot change USB descriptor shape or identity.
+10. MBR-04 qualification firmware is isolated from the production executable and is not itself a product feature.
