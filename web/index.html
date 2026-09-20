@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mouse Bridge Remapper — Web Simulator</title>
+  <link rel="stylesheet" href="simulator.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="app-header">
+      <div>
+        <h1>Mouse Bridge Remapper</h1>
+        <p>Static browser LCD/HAT simulator — 240×240 RGB565</p>
+      </div>
+      <div class="badge">STATIC • OFFLINE</div>
+    </header>
+
+    <section class="panel connection-panel" aria-label="Virtual mouse connection">
+      <label>Mouse ID <input id="mouseId" type="number" min="1" step="1" value="1"></label>
+      <label class="mouse-name">Mouse name <input id="mouseName" type="text" maxlength="63" value="LOGITECH LIFT"></label>
+      <button id="connectBtn" class="primary">CONNECT</button>
+      <button id="disconnectBtn">DISCONNECT</button>
+    </section>
+
+    <section class="panel toolbar" aria-label="Simulation controls">
+      <div class="button-row">
+        <button data-command="tick1000">+1 s</button>
+        <button data-command="tick8000">+8 s</button>
+        <button data-command="tick15000">+15 s</button>
+        <button data-command="home">HOME</button>
+        <button data-command="reboot">REBOOT</button>
+        <button data-command="factoryReset" class="danger">FACTORY RESET</button>
+      </div>
+      <div class="screen-inspector">
+        <label>Screen inspector
+          <select id="screenSelect"></select>
+        </label>
+        <button id="showScreenBtn">SHOW</button>
+      </div>
+    </section>
+
+    <section class="panel display-settings" aria-label="LCD settings">
+      <div class="setting-block">
+        <div class="setting-head">
+          <strong>LCD scale</strong>
+          <output id="scaleOutput">300% • 720×720</output>
+        </div>
+        <div class="choice-row" id="scaleChoices" role="radiogroup" aria-label="LCD scale"></div>
+      </div>
+      <div class="setting-block">
+        <div class="setting-head">
+          <strong>Virtual backlight</strong>
+          <output id="backlightOutput">300% • effective 300%</output>
+        </div>
+        <input id="backlightSlider" type="range" min="0" max="1000" step="10" value="300" aria-label="Virtual backlight percentage">
+        <div class="button-row compact">
+          <button data-backlight="0">0%</button>
+          <button data-backlight="100">100%</button>
+          <button data-backlight="300">300%</button>
+          <button data-backlight="500">500%</button>
+          <button data-backlight="750">750%</button>
+          <button data-backlight="1000">1000%</button>
+        </div>
+        <p class="hint">100% = RGB565 digital reference. Values above 100% are inspection gain. Lock always forces effective backlight to 0%.</p>
+      </div>
+    </section>
+
+    <section class="simulator-layout">
+      <div class="lcd-column">
+        <div class="lcd-stage">
+          <canvas id="lcd" width="240" height="240" aria-label="Virtual ST7789 LCD"></canvas>
+        </div>
+        <div id="lcdMeta" class="lcd-meta" aria-live="polite"></div>
+      </div>
+
+      <div class="controls-column">
+        <section class="panel hat-panel" aria-label="Virtual HAT">
+          <h2>Virtual HAT</h2>
+          <div class="hat-grid">
+            <span></span><button class="hat" data-control="up">↑</button><span></span><button class="hat key-a" data-control="a">A</button><button class="hat key-x" data-control="x">X</button>
+            <button class="hat" data-control="left">←</button><button class="hat joy" data-control="press">JOY</button><button class="hat" data-control="right">→</button><button class="hat key-b" data-control="b">B</button><button class="hat key-y" data-control="y">Y</button>
+            <span></span><button class="hat" data-control="down">↓</button>
+          </div>
+          <p class="hint">Keyboard: arrows = joystick • Enter/Space = JOY PRESS • A/B/X/Y = HAT keys</p>
+        </section>
+
+        <section class="panel status-panel">
+          <h2>State</h2>
+          <dl id="stateGrid"></dl>
+        </section>
+
+        <section class="panel event-panel">
+          <div class="event-head">
+            <h2>Events</h2>
+            <button id="clearEventsBtn">CLEAR</button>
+          </div>
+          <ol id="eventLog" aria-live="polite"></ol>
+        </section>
+      </div>
+    </section>
+
+    <footer>Pure static HTML/CSS/JavaScript. No backend, no network dependency, no WebAssembly.</footer>
+  </main>
+  <script src="simulator-core.js"></script>
+  <script src="simulator.js"></script>
+</body>
+</html>

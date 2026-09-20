@@ -182,3 +182,20 @@ python3 tools/lcd_simulator.py --build
 Keyboard: arrows = joystick, Enter/Space = Joy Press, and A/B/X/Y = HAT keys. The toolbar can inject virtual BLE Mouse connection/disconnection events, advance the deterministic 8 s / 15 s timers, reboot while preserving simulated state, or factory-reset it.
 
 This simulator is intended for layout/navigation/state-flow validation. It shares `MbrApp -> mbr_project() -> mbr_render()` with the firmware, but it does not emulate RP2350/CYW43/BTstack/TinyUSB/electrical LCD behavior. See [host virtual LCD/HAT simulator](docs/implementation/09-host-lcd-simulator.md).
+
+
+## Static browser simulator
+
+This experimental branch also includes a fully static browser simulator in `web/`. It uses only local HTML/CSS/JavaScript and can be opened without a backend:
+
+```sh
+xdg-open web/index.html
+```
+
+Or serve the folder locally:
+
+```sh
+python3 -m http.server 8080 -d web
+```
+
+It provides the same inspection controls as the desktop simulator: virtual HAT/keyboard input, Mouse connect/disconnect, deterministic timers, screen inspector, 0–1000% global backlight gain with Lock blackout, and LCD scales 75/100/125/150/200/300%. See [static browser simulator](docs/implementation/10-static-web-simulator.md).
