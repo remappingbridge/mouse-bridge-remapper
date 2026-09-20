@@ -27,8 +27,8 @@ EXPECTED_DEPS = {
     "hat": ["domain"],
     "app": [
         "domain", "mouse_registry", "mouse_session", "output_state", "profiles", "remap",
-        "pairing_coordinator", "bt_runtime", "ble_hogp", "logitech_hidpp", "product_storage",
-        "usb_hid", "interaction", "ui_projector", "renderer", "hat",
+        "pairing_coordinator", "ble_hogp", "logitech_hidpp", "product_storage",
+        "usb_hid", "interaction", "ui_projector", "renderer", "hat", "bt_runtime",
     ],
 }
 
