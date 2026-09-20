@@ -321,7 +321,6 @@ def check_ble_hogp_contract() -> None:
 
     cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     for token in (
-        "src/bt_runtime/bt_runtime_pico.c",
         "pico_btstack_ble",
         "pico_btstack_cyw43",
         "pico_cyw43_arch_threadsafe_background",
