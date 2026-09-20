@@ -42,6 +42,10 @@ A current authoritative Mouse and one replacement candidate may coexist in state
 
 Saved candidates cannot win PAIR_NEW. Timeout/cancel before handoff preserves the current authoritative Mouse. If that Mouse disconnects while Pair New owns presentation, connection truth changes without stealing the Pair New page; the next HOME resolution starts saved search.
 
+## Connected HOME amendment
+
+The MBR-02 UX amendment makes `home-connected` a direct visible entry point to Pair New. The connected Mouse name is projected as the title. The four options are Pair New, current remap summary, Saved Devices and Learn the Keys. Selection 0 starts the existing 15-second Pair New transaction without changing the current authoritative session.
+
 ## Screen model
 
 `mbr_screen_id_t` contains exactly the 30 canonical MBR screens from `docs/manual/06-screen-reference.md`. There are no Keyboard, Composite, Other Devices or multi-connected states.
