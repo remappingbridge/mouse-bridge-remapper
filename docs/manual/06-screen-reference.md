@@ -197,9 +197,11 @@ This text is literal. `ANY KEY: BACK` returns to `retry-pair-new` and consumes t
 
 ## home-connected
 
+Flow to this screen: `searching-first`, `home-searching` or `home-retry` -> `home-connected`. The first-Mouse instructional screen may also reach HOME through its documented Key-Y action.
+
 ```text
-MOUSE CONNECTED
 LOGITECH LIFT
+ PAIR NEW MOUSE
  REMAPPED TO ESCAPE
  SAVED DEVICES
  LEARN THE KEYS
@@ -209,7 +211,16 @@ JOY PRESS: ACCESS
 KEY X: HELP TO REMOVE
 ```
 
-Line 2 is the display name of the sole connected Mouse. Long names are projected as the first 21 renderer-supported characters; storage retains the complete normalized name. If no usable name is available, display `UNKNOWN MOUSE`.
+The title is dynamically the display name of the sole connected Mouse. Long names are projected as the first 21 renderer-supported characters; storage retains the complete normalized name. If no usable name is available, display `UNKNOWN MOUSE`.
+
+The four options are ordered:
+
+1. `PAIR NEW MOUSE` -> `pair-new`;
+2. the confirmed remap summary -> `remapper-options`;
+3. `SAVED DEVICES` -> `saved-devices`;
+4. `LEARN THE KEYS` -> `learn-the-keys`.
+
+`PAIR NEW MOUSE` is therefore a normal visible path from `home-connected` into `pair-new`. The current Mouse remains authoritative/usable while the new-only search runs.
 
 Profile summary values are exactly:
 
@@ -218,7 +229,7 @@ Profile summary values are exactly:
 - `REMAPPED TO ESCAPE`
 - `REMAPPED TO CUSTOM`
 
-The first option opens `remapper-options` for this Mouse. `SAVED DEVICES` and `LEARN THE KEYS` open their respective screens. If the live Mouse disconnects while this HOME is visible, HOME immediately resolves to `home-searching` and starts the 8-second saved search.
+If the live Mouse disconnects while this HOME is visible, HOME immediately resolves to `home-searching` and starts the 8-second saved search.
 
 ## help-home-connected
 
