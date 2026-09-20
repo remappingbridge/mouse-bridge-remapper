@@ -169,3 +169,16 @@ HOME names use 15 characters plus conditional ` MOUSE`; HOME options use action
 gray/white; onboarding screens retain full magenta. Real generic BLE passthrough
 is available. Profiles/HID++, persistent product records, replacement and removal
 remain later gates; the UI does not falsely confirm those effects.
+
+
+## Virtual LCD/HAT simulator
+
+This experimental branch can run the production UI state machine, projector and RGB565 renderer in a desktop 240×240 virtual LCD. The Tkinter window defaults to **3× scale (720×720)** and maps the PC keyboard/on-screen controls to the Waveshare HAT.
+
+```sh
+python3 tools/lcd_simulator.py --build
+```
+
+Keyboard: arrows = joystick, Enter/Space = Joy Press, and A/B/X/Y = HAT keys. The toolbar can inject virtual BLE Mouse connection/disconnection events, advance the deterministic 8 s / 15 s timers, reboot while preserving simulated state, or factory-reset it.
+
+This simulator is intended for layout/navigation/state-flow validation. It shares `MbrApp -> mbr_project() -> mbr_render()` with the firmware, but it does not emulate RP2350/CYW43/BTstack/TinyUSB/electrical LCD behavior. See [host virtual LCD/HAT simulator](docs/implementation/09-host-lcd-simulator.md).
