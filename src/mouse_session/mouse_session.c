@@ -1,5 +1,3 @@
-#include <stddef.h>
-
 #include "mbr/mouse_session/mouse_session.h"
 
 void mbr_mouse_session_slot_init(mbr_authoritative_mouse_slot_t *slot)
@@ -29,4 +27,11 @@ void mbr_mouse_session_slot_clear(mbr_authoritative_mouse_slot_t *slot)
 unsigned mbr_mouse_session_ready_count(const mbr_authoritative_mouse_slot_t *slot)
 {
     return slot != NULL && slot->occupied && slot->ready ? 1u : 0u;
+}
+
+bool mbr_mouse_session_matches(const mbr_authoritative_mouse_slot_t *slot,
+                               mbr_mouse_session_id_t session_id)
+{
+    return slot != NULL && slot->occupied && slot->ready &&
+           mbr_mouse_session_id_equal(slot->session_id, session_id);
 }
