@@ -66,6 +66,10 @@ if(MBR_BUILD_TESTS)
     target_link_libraries(mbr_test_ux_behavior PRIVATE mbr_module_app)
     add_test(NAME ux_behavior_contract COMMAND mbr_test_ux_behavior)
 
+    add_executable(mbr_test_renderer tests/test_renderer.c)
+    target_link_libraries(mbr_test_renderer PRIVATE mbr_module_app)
+    add_test(NAME renderer_hat_contract COMMAND mbr_test_renderer)
+
     add_test(
         NAME architecture_contract
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_architecture.py
