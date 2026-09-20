@@ -53,9 +53,37 @@ if(MBR_BUILD_PICO)
         src/usb_hid/usb_descriptors.c
     )
     target_link_libraries(mbr_impl_usb_hid PUBLIC tinyusb_device)
+
+    target_sources(mbr_impl_bt_runtime PRIVATE
+        src/bt_runtime/bt_runtime_pico.c
+    )
+    target_link_libraries(mbr_impl_bt_runtime PRIVATE
+        pico_stdlib
+        pico_btstack_ble
+        pico_btstack_cyw43
+        pico_cyw43_arch_threadsafe_background
+    )
+    target_compile_definitions(mbr_impl_bt_runtime PUBLIC
+        CYW43_LWIP=0
+        PICO_BTSTACK_CYW43_MAX_HCI_PROCESS_LOOP_COUNT=8
+    )
+    pico_btstack_make_gatt_header(
+        mbr_impl_bt_runtime
+        PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}/src/bt_runtime/g05_hog_host.gatt
+    )
+
+    target_sources(mbr_impl_ble_hogp PRIVATE
+        src/ble_hogp/ble_hogp_pico.c
+    )
+    target_link_libraries(mbr_impl_ble_hogp PRIVATE
+        pico_stdlib
+        pico_btstack_ble
+        mbr_impl_bt_runtime
+    )
 endif()
 
-target_compile_definitions(mbr_impl_domain PUBLIC MBR_VERSION_STRING="0.1.0-mbr01")
+target_compile_definitions(mbr_impl_domain PUBLIC MBR_VERSION_STRING="0.5.0-mbr05")
 
 if(MBR_BUILD_TESTS)
     enable_testing()
@@ -80,6 +108,14 @@ if(MBR_BUILD_TESTS)
     add_executable(mbr_test_usb_hid tests/test_usb_hid.c)
     target_link_libraries(mbr_test_usb_hid PRIVATE mbr_module_usb_hid)
     add_test(NAME usb_hid_contract COMMAND mbr_test_usb_hid)
+
+    add_executable(mbr_test_output_state tests/test_output_state.c)
+    target_link_libraries(mbr_test_output_state PRIVATE mbr_module_output_state)
+    add_test(NAME output_state_contract COMMAND mbr_test_output_state)
+
+    add_executable(mbr_test_ble_hogp tests/test_ble_hogp.c)
+    target_link_libraries(mbr_test_ble_hogp PRIVATE mbr_module_ble_hogp)
+    add_test(NAME ble_hogp_contract COMMAND mbr_test_ble_hogp)
 
     add_test(
         NAME architecture_contract
