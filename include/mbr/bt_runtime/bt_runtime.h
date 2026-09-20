@@ -12,3 +12,7 @@ void mbr_bt_accept(MouseSessionId session);
 void mbr_bt_disconnect(MouseSessionId session);
 /* Callback-side only, already inside the async owner. */
 bool mbr_bt_publish(const MbrBtMessage *message);
+void mbr_bt_registry(const MbrMouse *mice,size_t count);
+bool mbr_bt_forget(const MbrMouse *mouse);
+void mbr_bt_profile(MouseSessionId session,bool remapped);
+void mbr_bt_service(uint32_t now);

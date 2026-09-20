@@ -13,7 +13,7 @@ void mbr_app_home(MbrApp *a) {
 void mbr_app_init(MbrApp *a,uint32_t now) {
  memset(a,0,sizeof(*a)); a->now=now;
  const MbrTarget defaults[]={MBR_TARGET_LEFT,MBR_TARGET_RIGHT,MBR_TARGET_MIDDLE,MBR_TARGET_FORWARD,MBR_TARGET_BACKWARD};
- memcpy(a->draft,defaults,sizeof(defaults)); mbr_app_home(a);
+ memcpy(a->draft,defaults,sizeof(defaults)); memcpy(a->custom,defaults,sizeof(defaults)); mbr_app_home(a);
 }
 static MbrProfile live_profile(const MbrApp *a) { int i=mbr_registry_find(&a->registry,a->sessions.live.mouse); return i<0?MBR_PASSTHROUGH:a->registry.mice[i].profile; }
 static void pair(MbrApp *a) { show(a,S(PAIR_NEW)); search(a,MBR_SEARCH_NEW); }
@@ -34,7 +34,7 @@ static void contextual_help(MbrApp *a) {
  case S(REMOVE_THIS): dest=S(HELP_REMOVE_THIS); break;
  default:return;
  }
- a->help_owner=a->screen; show(a,dest);
+ a->help_owner=a->screen; a->help_selection=a->selection; show(a,dest);
 }
 static unsigned options(MbrScreen s) {
  if(s==S(HOME_CONNECTED)||s==S(REMAPPER_OPTIONS)) return 4;
@@ -55,7 +55,11 @@ void mbr_app_event(MbrApp *a,MbrControl c,bool down) {
   if(!mbr_screen_didactic(a->screen)||c==MBR_X) { a->locked=false; ++a->epoch; }
   return;
  }
- if(help(a->screen)) { show(a,a->help_owner); return; }
+ if(help(a->screen)) {
+  if(a->help_owner==S(HOME_SEARCHING)&&a->search.purpose==MBR_SEARCH_NONE) mbr_app_home(a);
+  else show(a,a->help_owner);
+  unsigned n=options(a->screen);a->selection=n?(uint8_t)(a->help_selection%n):0;return;
+ }
  if(a->screen==S(SEARCHING_FIRST)) return;
  if(a->screen==S(FIRST_MOUSE_CONNECTED)||a->screen==S(LEARN_THE_KEYS)) {
   if(c==MBR_B) { a->locked=true; ++a->epoch; }
@@ -89,7 +93,7 @@ void mbr_app_event(MbrApp *a,MbrControl c,bool down) {
   else if(c==MBR_PRESS) profile_page(a,(MbrProfile)a->selection);
   break;
  case S(PASSTHROUGH_ACTIVE):case S(PASSTHROUGH_NOT_ACTIVE):case S(STANDARD_ACTIVE):case S(STANDARD_NOT_ACTIVE):case S(ESCAPE_ACTIVE):case S(ESCAPE_NOT_ACTIVE):
-  if(c==MBR_B) show(a,S(REMAPPER_OPTIONS));
+  if(c==MBR_B) { a->request=(MbrRequest){0}; show(a,S(REMAPPER_OPTIONS)); }
   else if(c==MBR_LEFT && a->screen==S(ESCAPE_ACTIVE)) mbr_app_home(a);
   else if(c==MBR_A && (a->screen==S(PASSTHROUGH_NOT_ACTIVE)||a->screen==S(STANDARD_NOT_ACTIVE)||a->screen==S(ESCAPE_NOT_ACTIVE)))
    request(a,MBR_OP_PROFILE,a->sessions.live.mouse,a->screen==S(PASSTHROUGH_NOT_ACTIVE)?MBR_PASSTHROUGH:a->screen==S(STANDARD_NOT_ACTIVE)?MBR_STANDARD:MBR_ESCAPE);
@@ -107,7 +111,7 @@ void mbr_app_event(MbrApp *a,MbrControl c,bool down) {
   else if(c==MBR_PRESS && a->registry.count) show(a,S(REMOVE_THIS));
   break;
  case S(REMOVE_THIS):
-  if(c==MBR_B) show(a,S(SAVED_DEVICES));
+  if(c==MBR_B) { a->request=(MbrRequest){0}; show(a,S(SAVED_DEVICES)); }
   else if(c==MBR_A && a->page<a->registry.count) request(a,MBR_OP_REMOVE,a->registry.mice[a->page].id,MBR_PASSTHROUGH);
   break;
  default: break;
@@ -124,8 +128,12 @@ void mbr_app_tick(MbrApp *a,uint32_t now) {
 bool mbr_app_ready(MbrApp *a,uint32_t tx,const MbrMouse *m) {
  if(!m||!m->id||a->request.kind!=MBR_OP_NONE || !mbr_search_eligible(&a->search,tx,mbr_registry_find(&a->registry,m->id)>=0)) return false;
  if(mbr_search_expired(&a->search,a->now)) return false;
- a->candidate=*m; a->sessions.candidate=(MbrSession){.mouse=m->id,.ready=false};
- request(a,MBR_OP_HANDOFF,m->id,m->profile); return true;
+ if(a->registry.count>=MBR_SAVED_CAPACITY&&mbr_registry_find(&a->registry,m->id)<0) return false;
+ a->candidate=*m;
+ int saved=mbr_registry_find(&a->registry,m->id);
+ if(saved>=0) a->candidate.profile=a->registry.mice[saved].profile;
+ a->sessions.candidate=(MbrSession){.mouse=m->id,.ready=false};
+ request(a,MBR_OP_HANDOFF,m->id,a->candidate.profile); return true;
 }
 bool mbr_app_confirm(MbrApp *a,uint32_t token,bool success) {
  MbrRequest r=a->request; if(r.kind==MBR_OP_NONE||r.token!=token) return false;
@@ -133,20 +141,19 @@ bool mbr_app_confirm(MbrApp *a,uint32_t token,bool success) {
  if(!success) { if(r.kind==MBR_OP_HANDOFF) a->sessions.candidate=(MbrSession){0}; return true; }
  int i=mbr_registry_find(&a->registry,r.mouse);
  if(r.kind==MBR_OP_HANDOFF) {
-  /* Adapter confirms required effects before this call. MBR-05 supports only
-   * initial/same-boot RAM registration; durable replacement is MBR-07. */
+  /* Bridge confirms release, old transport closure and durable state first. */
   bool first=a->registry.count==0;
   if(!mbr_registry_put(&a->registry,&a->candidate)) return false;
   a->sessions.live=(MbrSession){0};
   if(!mbr_session_promote(&a->sessions,r.mouse)) return false;
   mbr_search_cancel(&a->search);
-  if(help(a->screen)) a->help_owner=first?S(FIRST_MOUSE_CONNECTED):S(HOME_CONNECTED);
-  else show(a,first?S(FIRST_MOUSE_CONNECTED):S(HOME_CONNECTED));
+  if(help(a->screen)) { if(home(a->help_owner)||a->help_owner==S(PAIR_NEW)||a->help_owner==S(RETRY_PAIR_NEW)) a->help_owner=first?S(FIRST_MOUSE_CONNECTED):S(HOME_CONNECTED); }
+  else if(first||home(a->screen)||a->screen==S(PAIR_NEW)||a->screen==S(RETRY_PAIR_NEW)) show(a,first?S(FIRST_MOUSE_CONNECTED):S(HOME_CONNECTED));
  } else if(r.kind==MBR_OP_DRAFT) {
   a->draft[r.source]=r.target; a->custom_dirty=true; show(a,S(CUSTOM_EDIT)); a->selection=r.source;
  } else if(r.kind==MBR_OP_PROFILE) {
   if(i<0 || !a->sessions.live.ready || a->sessions.live.generation!=r.session) return false;
-  a->registry.mice[i].profile=r.profile; if(r.profile==MBR_CUSTOM) a->custom_dirty=false;
+  a->registry.mice[i].profile=r.profile; if(r.profile==MBR_CUSTOM) { a->custom_dirty=false; memcpy(a->custom,a->draft,sizeof(a->custom)); }
   profile_page(a,r.profile);
  } else if(r.kind==MBR_OP_REMOVE) {
   if(a->sessions.live.mouse==r.mouse) a->sessions.live=(MbrSession){0};
@@ -160,7 +167,7 @@ void mbr_app_disconnected(MbrApp *a,MouseSessionId generation) {
  if(!mbr_session_clear(&a->sessions,generation)) return;
  if(a->request.kind==MBR_OP_PROFILE) a->request=(MbrRequest){0};
  if(home(a->screen)) mbr_app_home(a);
- else if(a->screen==S(HELP_HOME_CONNECTED)) { search(a,MBR_SEARCH_SAVED); a->help_owner=S(HOME_SEARCHING); }
+ else if(a->screen==S(HELP_HOME_CONNECTED)) a->help_owner=S(HOME_SEARCHING);
 }
 void mbr_app_view(const MbrApp *a,MbrView *v) {
  memset(v,0,sizeof(*v)); v->screen=a->screen; v->selection=a->selection; v->pressed=a->interaction.pressed;

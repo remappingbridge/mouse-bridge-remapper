@@ -17,7 +17,7 @@ bool mbr_output_event(MbrOutput *o,const MbrMouseEvent *e,const MbrTarget mappin
   o->held[b]=down;o->owner[b]=t;
   if(down)++o->refs[t];else if(o->refs[t])--o->refs[t];
   o->pending.buttons=(uint8_t)((o->refs[0]?1:0)|(o->refs[1]?2:0)|(o->refs[2]?4:0)|
-   (o->refs[MBR_TARGET_FORWARD]?8:0)|(o->refs[MBR_TARGET_BACKWARD]?16:0));
+   (o->refs[MBR_TARGET_BACKWARD]?8:0)|(o->refs[MBR_TARGET_FORWARD]?16:0));
   o->pending.escape=o->refs[MBR_TARGET_ESCAPE]!=0;
  } else if(e->type==MBR_MOUSE_MOVE) {
   o->pending.x=bounded(o->pending.x,e->data.move.dx);o->pending.y=bounded(o->pending.y,e->data.move.dy);

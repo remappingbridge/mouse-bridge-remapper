@@ -1,4 +1,4 @@
 #pragma once
-#include <stdbool.h>
-/* Reserved owner; not implemented before MBR-05/06. */
-bool mbr_remap_available(void);
+#include "mbr/profiles/profiles.h"
+#include "mbr/output_state/output_state.h"
+bool mbr_remap_event(MbrOutput *output,const MbrMouseEvent *event,MbrProfile profile,const MbrTarget custom[5]);

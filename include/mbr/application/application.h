@@ -13,8 +13,9 @@ typedef struct {
  MbrRegistry registry; MbrSessions sessions; MbrSearchTransaction search;
  MbrInteraction interaction; MbrScreen screen,help_owner;
  uint32_t epoch,request_counter,now; uint8_t selection,page,source;
- bool locked,custom_dirty; MbrTarget draft[5]; MbrRequest request;
+ bool locked,custom_dirty; MbrTarget draft[5],custom[5]; MbrRequest request;
  MbrMouse candidate;
+ uint8_t help_selection;
 } MbrApp;
 void mbr_app_init(MbrApp *a,uint32_t now);
 void mbr_app_home(MbrApp *a);

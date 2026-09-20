@@ -26,3 +26,7 @@ void mbr_hogp_setup(MbrHogpPublish publish);
 void mbr_hogp_accept(MouseSessionId session);
 void mbr_hogp_search(MbrSearch purpose,uint32_t transaction);
 void mbr_hogp_disconnect(MouseSessionId session);
+void mbr_hogp_registry(const MbrMouse *mice,size_t count);
+bool mbr_hogp_forget(const MbrMouse *mouse);
+void mbr_hogp_profile(MouseSessionId session,bool remapped);
+void mbr_hogp_tick(uint32_t now);

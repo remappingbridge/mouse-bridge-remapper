@@ -12,7 +12,7 @@ typedef uint32_t MouseSessionId;
 typedef enum { MBR_UP, MBR_DOWN, MBR_LEFT, MBR_RIGHT, MBR_PRESS, MBR_A, MBR_B, MBR_X, MBR_Y, MBR_CONTROL_COUNT } MbrControl;
 typedef enum { MBR_PASSTHROUGH, MBR_STANDARD, MBR_ESCAPE, MBR_CUSTOM } MbrProfile;
 typedef enum { MBR_TARGET_LEFT, MBR_TARGET_RIGHT, MBR_TARGET_MIDDLE, MBR_TARGET_ESCAPE, MBR_TARGET_FORWARD, MBR_TARGET_BACKWARD } MbrTarget;
-typedef struct { MouseId id; char name[MBR_NAME_CAPACITY]; MbrProfile profile; } MbrMouse;
+typedef struct { MouseId id; char name[MBR_NAME_CAPACITY]; MbrProfile profile; uint8_t address[6],address_type; bool bonded; } MbrMouse;
 typedef struct { MouseId mouse; MouseSessionId generation; bool ready; } MbrSession;
 typedef enum { MBR_SEARCH_NONE, MBR_SEARCH_FIRST, MBR_SEARCH_SAVED, MBR_SEARCH_NEW } MbrSearch;
 typedef struct { uint8_t buttons; bool escape; int32_t x,y,wheel,pan; } mbr_output_state_t;

@@ -20,13 +20,15 @@
     "output_state"
   ],
   "product_storage": [
-    "domain"
+    "domain",
+    "mouse_registry"
   ],
   "logitech_hidpp": [
     "domain"
   ],
   "ble_hogp": [
-    "domain"
+    "domain",
+    "logitech_hidpp"
   ],
   "bt_runtime": [
     "domain",
@@ -58,6 +60,8 @@
     "hat",
     "usb_hid",
     "bt_runtime",
-    "output_state"
+    "output_state",
+    "product_storage",
+    "remap"
   ]
 }

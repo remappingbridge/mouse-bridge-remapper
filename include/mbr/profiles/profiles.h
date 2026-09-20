@@ -1,4 +1,4 @@
 #pragma once
-#include <stdbool.h>
-/* Reserved owner; not implemented before MBR-05/06. */
-bool mbr_profiles_available(void);
+#include "mbr/domain/domain.h"
+/* UI template order L/R/M/Forward/Back; transport order L/R/M/Back/Forward. */
+bool mbr_profiles_mapping(MbrProfile profile,const MbrTarget custom[5],MbrTarget out[5]);

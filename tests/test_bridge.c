@@ -2,6 +2,13 @@
 #include "mbr/usb_hid/usb_hid.h"
 #include <assert.h>
 static MbrBtQueue queue;static MbrUsbQueue usb;static MouseSessionId accepted,dropped;
+static MbrProduct stored;static bool storage_fail;
+bool mbr_product_load(MbrProduct *p){mbr_product_defaults(p);return false;}
+bool mbr_product_save(const MbrProduct *p){if(storage_fail)return false;stored=*p;return true;}
+void mbr_bt_registry(const MbrMouse *m,size_t n){(void)m;(void)n;}
+bool mbr_bt_forget(const MbrMouse *m){(void)m;return true;}
+void mbr_bt_profile(MouseSessionId s,bool remapped){(void)s;(void)remapped;}
+void mbr_bt_service(uint32_t now){(void)now;}
 static uint32_t epoch;static bool usb_fail;static unsigned releases;
 void mbr_bt_search(MbrSearch p,uint32_t tx) {(void)p;(void)tx;}
 bool mbr_bt_next(MbrBtMessage *m,bool *overflow) {*overflow=queue.overflow;queue.overflow=false;return mbr_bt_pop(&queue,m);}
@@ -34,7 +41,8 @@ int main(void) {
  usb_fail=true;button(&b,&a,7,true);assert(!b.transport&&!a.sessions.live.ready&&dropped==7);usb_fail=false;
  ready(&b,&a,8,a.search.generation);assert(b.transport==8);
  queue.overflow=true;mbr_bridge_task(&b,&a);assert(!b.transport&&!a.sessions.live.ready&&dropped==0);
- ready(&b,&a,9,a.search.generation);button(&b,&a,9,true);++epoch;mbr_bridge_task(&b,&a);assert(!b.transport&&!a.sessions.live.ready);
+ ready(&b,&a,9,a.search.generation);button(&b,&a,9,true);++epoch;mbr_bridge_task(&b,&a);assert(b.transport==9&&a.sessions.live.ready&&!b.output.pending.buttons);
+ mbr_bridge_release(&b,&a);
  // Application deadlines win over a late callback already queued by the radio.
  uint32_t expired=a.search.generation;mbr_app_tick(&a,a.now+MBR_SAVED_MS);ready(&b,&a,10,expired);assert(!b.transport&&dropped==10);
  return 0;

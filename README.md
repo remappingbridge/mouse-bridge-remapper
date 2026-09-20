@@ -1,3 +1,5 @@
+> **Branch experimental MBR-06/07/08:** `experimental/mbr08-integrated-recovery-20260920`, baseada no MBR-05. Implementação integrada com testes automatizados e firmware Pico 2 W; aceitação física pendente. Não mesclar para experimentar: grave o UF2 desta branch. Ver [evidências](docs/implementation/08-experimental-mbr06-08.md) e [cenários manuais](docs/implementation/08-manual-tests.md).
+
 # Mouse Bridge Remapper
 
 Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing BLE HOGP mice, forwarding one authoritative Mouse to the host over USB, and remapping mouse buttons without host-side software.

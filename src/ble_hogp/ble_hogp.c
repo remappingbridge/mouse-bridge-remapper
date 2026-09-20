@@ -248,7 +248,7 @@ bool mbr_hogp_configure(MbrHogpParser *parser,
             const bool is_mouse_application = unsigned_value == HID_COLLECTION_APPLICATION &&
                 (uint16_t)(usage >> 16u) == HID_USAGE_PAGE_GENERIC_DESKTOP &&
                 (uint16_t)usage == HID_USAGE_MOUSE;
-            if (unsigned_value == HID_COLLECTION_APPLICATION && !is_mouse_application && (uint16_t)(usage >> 16u) != 0xff00u) return false;
+            if (unsigned_value == HID_COLLECTION_APPLICATION && !is_mouse_application && (uint16_t)(usage >> 16u) < 0xff00u && (uint16_t)(usage >> 16u) != HID_USAGE_PAGE_CONSUMER) return false;
             if (collection_depth >= COLLECTION_STACK_CAPACITY) return false;
             mouse_collection_stack[collection_depth++] = (bool)(in_mouse_collection || is_mouse_application);
             in_mouse_collection = mouse_collection_stack[collection_depth - 1u];

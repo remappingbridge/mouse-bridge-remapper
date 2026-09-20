@@ -18,14 +18,15 @@ int main(void) {
  static MbrQualification qualification;mbr_qualification_init(&qualification);
 #endif
  #ifndef MBR_QUALIFICATION
- static MbrBridge bridge;bool radio_attempted=false;
+ static MbrBridge bridge;bool radio_started=false;uint32_t radio_retry=0;
+ mbr_bridge_init(&bridge,&app);
  #endif
  uint32_t scan=0;
  for(;;) {
   uint32_t now=to_ms_since_boot(get_absolute_time());mbr_usb_task();mbr_app_tick(&app,now);
 #ifndef MBR_QUALIFICATION
-  if(have_frame&&flush_y==240&&!radio_attempted) {radio_attempted=true;(void)mbr_bt_start();}
-  if(radio_attempted)mbr_bridge_task(&bridge,&app);
+  if(have_frame&&flush_y==240&&!radio_started&&(int32_t)(now-radio_retry)>=0) {radio_started=mbr_bt_start();radio_retry=now+3000;}
+  if(radio_started)mbr_bridge_task(&bridge,&app);
 #endif
   if((uint32_t)(now-scan)>=1) {
    scan=now;mbr_hat_sample(&hat,mbr_hat_read(),now);

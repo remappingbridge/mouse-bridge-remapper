@@ -34,8 +34,12 @@ int main(void) {
  for(size_t i=0;i<sizeof(map);++i)assert(!mbr_hogp_configure(&p,1,map,i));
  uint8_t bad[sizeof(map)];memcpy(bad,map,sizeof(map));bad[7]=0;assert(!mbr_hogp_configure(&p,1,bad,sizeof(bad)));
  memcpy(bad,map,sizeof(map));bad[3]=6;assert(!mbr_hogp_configure(&p,1,bad,sizeof(bad))); // keyboard
- uint8_t composite[sizeof(map)+6];memcpy(composite,map,sizeof(map));memcpy(composite+sizeof(map),(uint8_t[]){0x09,6,0xa1,1,0xc0,0},6);
- assert(!mbr_hogp_configure(&p,1,composite,sizeof(composite)-1));
+ uint8_t composite[sizeof(map)+7];memcpy(composite,map,sizeof(map));
+ // Consumer auxiliary collection is valid; an actual Keyboard application is not.
+ memcpy(composite+sizeof(map),(uint8_t[]){0x05,0x0c,0x09,1,0xa1,1,0xc0},7);
+ assert(mbr_hogp_configure(&p,1,composite,sizeof(composite)));
+ composite[sizeof(map)+1]=1;composite[sizeof(map)+3]=6;
+ assert(!mbr_hogp_configure(&p,1,composite,sizeof(composite)));
  // Accepted USB Mouse descriptor is also a no-ID canonical test fixture.
  size_t length;const uint8_t *usb=mbr_usb_report_descriptor(0,&length);assert(mbr_hogp_configure(&p,2,usb,length));
  count=0;uint8_t report[]={31,127,0x81,1,0xff};assert(mbr_hogp_parse(&p,0,report,5,emit,NULL)&&count==7);
