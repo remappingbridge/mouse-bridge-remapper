@@ -129,7 +129,6 @@ if(MBR_BUILD_PICO)
     target_link_libraries(mouse_bridge_remapper PRIVATE
         pico_stdlib
         mbr_module_app
-        mbr_impl_bt_runtime
     )
 
     pico_enable_stdio_usb(mouse_bridge_remapper 0)
