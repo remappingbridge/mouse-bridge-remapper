@@ -1,6 +1,6 @@
 # Verification and invariants
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 These are mandatory implementation/test properties.
 
@@ -50,18 +50,20 @@ These are mandatory implementation/test properties.
 
 ## UI invariants
 
-1. `home-connected` represents exactly one authoritative Mouse and shows its name/profile.
-2. No `N DEVICES CONNECTED` form exists.
-3. Saved Devices has at most one cyan/CONNECTED page.
-4. Disconnected saved Mouse status is exactly `STATUS: DISCONNECTED`.
-5. Name projection is deterministic: first 21 supported characters; fallback `UNKNOWN MOUSE`.
-6. Selected/pressed white overrides cyan.
-7. Async state events update relevant visible UI without waiting for unrelated input.
-8. Actions execute on release.
-9. Help owns/consumes all controls.
-10. Hidden controls are not inferred from old BLU2USB screens.
-11. Pair New Help text is the exact frozen text in the canonical screen reference.
-12. `JOY LEFT: GO TO HOME` on `escape-active` is a deliberate direct-HOME exception.
+1. `home-connected` represents exactly one authoritative Mouse and uses its projected name as the dynamic title.
+2. `home-connected` exposes exactly four visible options in order: Pair New, current remap summary, Saved Devices, Learn the Keys.
+3. Selecting Pair New from `home-connected` enters `pair-new` without disconnecting the current Mouse.
+4. No `N DEVICES CONNECTED` form exists.
+5. Saved Devices has at most one cyan/CONNECTED page.
+6. Disconnected saved Mouse status is exactly `STATUS: DISCONNECTED`.
+7. Name projection is deterministic: first 21 supported characters; fallback `UNKNOWN MOUSE`.
+8. Selected/pressed white overrides cyan.
+9. Async state events update relevant visible UI without waiting for unrelated input.
+10. Actions execute on release.
+11. Help owns/consumes all controls.
+12. Hidden controls are not inferred from old BLU2USB screens.
+13. Pair New Help text is the exact frozen text in the canonical screen reference.
+14. `JOY LEFT: GO TO HOME` on `escape-active` is a deliberate direct-HOME exception.
 
 ## Profile invariants
 

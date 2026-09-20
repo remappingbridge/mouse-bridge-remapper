@@ -1,6 +1,6 @@
 # Home and connection lifecycle
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 Mouse Bridge Remapper may keep many saved mice but has exactly one authoritative live Mouse slot.
 
@@ -24,8 +24,8 @@ Saved search lasts **8 seconds**. The first saved Mouse that reaches ready state
 ## HOME with a connected Mouse
 
 ```text
-MOUSE CONNECTED
 LOGITECH LIFT
+ PAIR NEW MOUSE
  REMAPPED TO ESCAPE
  SAVED DEVICES
  LEARN THE KEYS
@@ -35,7 +35,7 @@ JOY PRESS: ACCESS
 KEY X: HELP TO REMOVE
 ```
 
-Line 2 is always the sole connected Mouse name. The remap summary belongs to that same Mouse and reflects only confirmed runtime+persistent profile state.
+The title is always the display name of the sole connected Mouse. The four visible options are, in order: `PAIR NEW MOUSE`, the current confirmed remap summary, `SAVED DEVICES`, and `LEARN THE KEYS`. The remap summary belongs to that same Mouse and reflects only confirmed runtime+persistent profile state. Selecting `PAIR NEW MOUSE` enters the existing 15-second new-only replacement search without disconnecting the current Mouse. Selecting the remap summary opens `remapper-options` for this Mouse.
 
 ## Disconnect/power-off
 
@@ -50,6 +50,10 @@ If the current Mouse disconnects:
 With saved records and no live Mouse, HOME becomes `home-searching` and starts the 8-second saved search. Search expiry leads to `home-retry` / `DEVICE NOT FOUND`.
 
 There is no separate hidden infinite reconnect state machine.
+
+## Pair New from connected HOME
+
+`PAIR NEW MOUSE` is now a direct visible path from `home-connected` into `pair-new`. The current Mouse remains authoritative and usable while the new-only search qualifies an unsaved replacement candidate.
 
 ## Saved-device search
 

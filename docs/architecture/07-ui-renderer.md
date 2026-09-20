@@ -1,6 +1,6 @@
 # UI and renderer contract
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 ## Hardware baseline
 
@@ -44,6 +44,8 @@ saved + authoritative Mouse -> home-connected
 saved + no authoritative Mouse -> home-searching
 saved search expires/cancels -> home-retry
 ```
+
+`home-connected` projects the current authoritative Mouse name as the dynamic title. Its four visible options are, in order, Pair New, current remap summary, Saved Devices and Learn the Keys. Pair New is the direct visible connected-Mouse entry into the existing 15-second replacement transaction. The current Mouse remains authoritative while that transaction qualifies a candidate.
 
 When HOME is visible, a live disconnect reprojects immediately to `home-searching` and application starts saved search. When another page owns presentation, connection truth updates but navigation is not forcibly stolen; the HOME resolver applies on next HOME access.
 

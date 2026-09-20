@@ -1,6 +1,6 @@
 # Controls, lock and help
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 Mouse Bridge Remapper uses the Waveshare Pico-LCD-1.3 HAT joystick and keys as its local control surface.
 
@@ -20,6 +20,17 @@ Where declared by the screen reference:
 - `JOY PRESS` accesses selected option.
 
 Saved Devices uses `JOY RIGHT\LEFT: PAGE` with page wrap.
+
+## Connected HOME options
+
+When `home-connected` is visible, `JOY UP/DOWN` selects among four options:
+
+1. `PAIR NEW MOUSE` — starts the 15-second new-only Pair New search;
+2. the current remap summary — opens `remapper-options`;
+3. `SAVED DEVICES`;
+4. `LEARN THE KEYS`.
+
+The current Mouse remains connected while Pair New is being qualified.
 
 ## Back and HOME
 

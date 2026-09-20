@@ -1,6 +1,6 @@
-# Frozen MBR-01 architecture facade.
-# Facade targets encode ownership/dependency boundaries while implementation
-# libraries remain intentionally minimal until their owning gates execute.
+# Frozen MBR module graph.
+# Declaration and wiring are separate so each implementation library precedes
+# its dependency libraries on static link lines once modules contain real code.
 
 set(MBR_MODULES
     domain
@@ -44,8 +44,11 @@ function(mbr_declare_contract_modules)
     foreach(module IN LISTS MBR_MODULES)
         add_library(mbr_module_${module} INTERFACE)
     endforeach()
+endfunction()
 
+function(mbr_wire_contract_modules)
     foreach(module IN LISTS MBR_MODULES)
+        target_link_libraries(mbr_module_${module} INTERFACE mbr_impl_${module})
         foreach(dep IN LISTS MBR_DEPS_${module})
             if(NOT dep STREQUAL "")
                 target_link_libraries(mbr_module_${module} INTERFACE mbr_module_${dep})

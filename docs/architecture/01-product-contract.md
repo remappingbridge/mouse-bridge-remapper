@@ -1,6 +1,6 @@
 # Product contract
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 ## Purpose
 
@@ -31,6 +31,17 @@ live_authoritative_mouse = None | one MouseSession
 ```
 
 A replacement candidate may temporarily have transport state while being qualified, but product-visible ready/authoritative count never exceeds one.
+
+## Connected HOME
+
+When one Mouse is authoritative, `home-connected` uses the connected Mouse's projected name as its dynamic title and exposes four visible options:
+
+1. `PAIR NEW MOUSE` -> Pair New;
+2. the confirmed remap summary -> `remapper-options`;
+3. `SAVED DEVICES`;
+4. `LEARN THE KEYS`.
+
+The first option is the visible entry path for replacement Pair New while the current Mouse remains live and usable.
 
 ## HOME resolution
 

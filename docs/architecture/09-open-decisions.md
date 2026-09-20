@@ -1,6 +1,8 @@
-# MBR-00 frozen decisions
+# MBR-00 frozen decisions and MBR-02 UX amendment
 
 Status: **NO OPEN PRODUCT DECISION BLOCKS MBR-01 THROUGH MBR-07**.
+
+The 2026-09-20 MBR-02 UX amendment supersedes the former `home-connected` layout only; all other MBR-00 decisions remain in force.
 
 MBR-00 closed the implementation-facing ambiguities that existed before the contract freeze.
 
@@ -17,6 +19,14 @@ MBR-00 closed the implementation-facing ambiguities that existed before the cont
 - FIRST_MOUSE finite discovery cycle: 8 seconds, automatically repeated while no Mouse is saved;
 - SEARCH_SAVED: 8 seconds;
 - PAIR_NEW: 15 seconds.
+
+## MBR-02 amendment — connected HOME Pair New entry
+
+- `home-connected` title is the current connected Mouse name;
+- visible options, in order: `PAIR NEW MOUSE`, current remap summary, `SAVED DEVICES`, `LEARN THE KEYS`;
+- Pair New is reachable directly from the first option;
+- the current Mouse remains authoritative/usable while Pair New qualifies an unsaved candidate;
+- selecting the remap summary opens `remapper-options`.
 
 ## Frozen Pair New behavior
 
