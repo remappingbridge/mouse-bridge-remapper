@@ -2,3 +2,40 @@ int mbr_bt_runtime_scaffold(void)
 {
     return 0;
 }
+
+#ifdef MBR_PLATFORM_PICO
+
+#include "btstack.h"
+#include "g05_hog_host.h"
+#include "pico/cyw43_arch.h"
+
+static mbr_bt_runtime_session_setup_fn g_session_setup;
+static bool g_started;
+
+bool mbr_bt_runtime_start(mbr_bt_runtime_session_setup_fn session_setup)
+{
+    if (g_started || session_setup == NULL) return false;
+
+    mbr_bt_runtime_reset();
+    g_session_setup = session_setup;
+
+    if (cyw43_arch_init() != 0) {
+        g_session_setup = NULL;
+        return false;
+    }
+
+    l2cap_init();
+    sm_init();
+    sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
+    sm_set_authentication_requirements(SM_AUTHREQ_SECURE_CONNECTION |
+                                       SM_AUTHREQ_BONDING);
+    gatt_client_init();
+    att_server_init(profile_data, NULL, NULL);
+
+    g_session_setup();
+    hci_power_control(HCI_POWER_ON);
+    g_started = true;
+    return true;
+}
+
+#endif
