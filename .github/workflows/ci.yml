@@ -67,22 +67,26 @@ jobs:
           export PICO_SDK_PATH="${RUNNER_TEMP}/pico-sdk"
           cmake -S . -B build-pico \
             -DMBR_BUILD_PICO=ON \
+            -DMBR_BUILD_PICO_QUALIFICATION=ON \
             -DMBR_BUILD_TESTS=OFF \
             -DPICO_BOARD=pico2_w \
             -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build Pico 2 W production scaffold
+      - name: Build Pico 2 W production and qualification firmware
         run: cmake --build build-pico --parallel
 
-      - name: Verify non-empty scaffold UF2
+      - name: Verify non-empty MBR-03 UF2s
         run: |
           test -s build-pico/mouse_bridge_remapper.uf2
-          sha256sum build-pico/mouse_bridge_remapper.uf2
-          wc -c build-pico/mouse_bridge_remapper.uf2
+          test -s build-pico/mbr_renderer_hat_qualification.uf2
+          sha256sum build-pico/mouse_bridge_remapper.uf2 build-pico/mbr_renderer_hat_qualification.uf2
+          wc -c build-pico/mouse_bridge_remapper.uf2 build-pico/mbr_renderer_hat_qualification.uf2
 
-      - name: Upload scaffold UF2
+      - name: Upload MBR-03 UF2s
         uses: actions/upload-artifact@v4
         with:
-          name: mbr-01-pico2w-scaffold-uf2
-          path: build-pico/mouse_bridge_remapper.uf2
+          name: mbr-03-pico2w-renderer-hat-uf2
+          path: |
+            build-pico/mouse_bridge_remapper.uf2
+            build-pico/mbr_renderer_hat_qualification.uf2
           if-no-files-found: error

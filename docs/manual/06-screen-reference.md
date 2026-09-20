@@ -1,6 +1,6 @@
 # Canonical screen reference
 
-Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 AND HOME-SEARCHING HELP DECISION 2026-09-20**.
 
 This document is the executable user-facing screen inventory. Parenthetical annotations from historical planning are metadata and are never rendered. Unless explicitly stated otherwise, rows fit the 21-character semantic width.
 
@@ -77,17 +77,17 @@ The first saved Mouse that reaches ready state becomes the sole connected Mouse 
 
 ```text
 HOME SEARCHING HELP
-UNLESS IT IS CANCELED
-THE SEARCH WILL TAKE
-A FEW SECONDS AND
-WILL BE TRIGGERED
-EVERY TIME YOU ACCESS
-THIS SCREEN.
+THE MATCHING ATTEMPT
+TOOK PLACE ONLY FOR
+DEVICES ALREADY SAVED
+IN THE PREFERENCES,
+BUT NOT FOR DEVICES
+THAT WERE NOT SAVED.
 
 ANY KEY: BACK
 ```
 
-Any HAT control returns to `home-searching` and is consumed.
+This literal explains that the HOME matching attempt is saved-device-only. Any HAT control returns to `home-searching` and is consumed. The automatic saved-device search remains an 8-second `SEARCH_SAVED` transaction; Pair New remains a separate 15-second unsaved-only search.
 
 ## home-retry
 

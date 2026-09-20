@@ -1,6 +1,6 @@
 # Verification and invariants
 
-Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 AND HOME-SEARCHING HELP DECISIONS 2026-09-20; MBR-03 IMPLEMENTED**.
 
 These are mandatory implementation/test properties.
 
@@ -64,6 +64,18 @@ These are mandatory implementation/test properties.
 12. Hidden controls are not inferred from old BLU2USB screens.
 13. Pair New Help text is the exact frozen text in the canonical screen reference.
 14. `JOY LEFT: GO TO HOME` on `escape-active` is a deliberate direct-HOME exception.
+
+## Renderer/HAT invariants
+
+1. ST7789 output is 240x240 RGB565 on the frozen Waveshare pin map.
+2. Renderer geometry remains 10x14 glyphs, 11 px advance, x=7, title y=8, standard body y=39, hint baseline y=214.
+3. Hint background is dark magenta and begins 11 px above the first hint glyph; didactic screens use the full dark-magenta field.
+4. Semantic colors map title/body/option/white/cyan to magenta/off-white-yellow/light-gray/white/cyan.
+5. White selected/pressed state overrides cyan current state.
+6. HAT inputs are active-low, debounced for 20 ms, scanned at 1 ms and delivered through a bounded queue.
+7. Help consumes every HAT release while visible; renderer never invents navigation.
+8. No production serial/CDC diagnostic path is introduced for renderer/HAT acceptance.
+9. The non-production qualification firmware is separate from the production executable behavior.
 
 ## Profile invariants
 
