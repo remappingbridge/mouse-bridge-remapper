@@ -299,12 +299,6 @@ static int smoke_test(void)
     assert(app.screen == MBR_SCREEN_FIRST_MOUSE_CONNECTED);
     tap(MBR_Y);
     assert(app.screen == MBR_SCREEN_HOME_CONNECTED);
-    tap(MBR_Y);
-    assert(app.locked);
-    assert(effective_backlight_percent() == 0u);
-    tap(MBR_X);
-    assert(!app.locked);
-    assert(effective_backlight_percent() == 300u);
     tap(MBR_DOWN);
     tap(MBR_PRESS);
     assert(app.screen == MBR_SCREEN_REMAPPER_OPTIONS);
@@ -318,6 +312,12 @@ static int smoke_test(void)
     app.selection = 0;
     tap(MBR_PRESS);
     assert(app.screen == MBR_SCREEN_PAIR_NEW);
+    tap(MBR_Y);
+    assert(app.locked);
+    assert(effective_backlight_percent() == 0u);
+    tap(MBR_X);
+    assert(!app.locked);
+    assert(effective_backlight_percent() == 300u);
     assert(connect_mouse(2u, "GENERIC MOUSE"));
     assert(app.screen == MBR_SCREEN_HOME_CONNECTED);
     assert(app.registry.count == 2u);
