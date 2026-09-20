@@ -36,6 +36,15 @@ MUTED = "#b8b8b8"
 ACCENT = "#7ad7ff"
 ENTRY_BG = "#111111"
 
+EXPECTED_SCALED_PIXELS = {
+    75: 180,
+    100: 240,
+    125: 300,
+    150: 360,
+    200: 480,
+    300: 720,
+}
+
 KEYS = {
     "Up": "up",
     "Down": "down",
@@ -342,6 +351,18 @@ class Simulator:
         self.root.destroy()
 
 
+def self_test() -> int:
+    for percent, expected in EXPECTED_SCALED_PIXELS.items():
+        numerator, denominator = SCALE_FACTORS[percent]
+        actual = 240 * numerator // denominator
+        if actual != expected:
+            raise AssertionError(f"{percent}% produced {actual}px, expected {expected}px")
+    if set(SCALE_FACTORS) != set(EXPECTED_SCALED_PIXELS):
+        raise AssertionError("scale presets and expected dimensions differ")
+    print("lcd simulator GUI self-test PASS")
+    return 0
+
+
 def build_backend() -> None:
     subprocess.run(["cmake", "-S", str(ROOT), "-B", str(ROOT / "build-host"), "-DCMAKE_BUILD_TYPE=Debug"], check=True)
     subprocess.run(["cmake", "--build", str(ROOT / "build-host"), "--target", "mbr_lcd_simulator", "--parallel"], check=True)
@@ -352,7 +373,11 @@ def main() -> int:
     parser.add_argument("--backend", type=Path, default=DEFAULT_BACKEND)
     parser.add_argument("--build", action="store_true", help="build the C backend before opening the window")
     parser.add_argument("--scale", type=int, choices=tuple(SCALE_FACTORS), default=300, help="initial LCD display scale in percent")
+    parser.add_argument("--self-test", action="store_true", help="validate scale presets without opening Tk")
     args = parser.parse_args()
+
+    if args.self_test:
+        return self_test()
 
     if args.build:
         build_backend()
