@@ -201,8 +201,12 @@ def check_production_scaffold() -> None:
 
     executable_names = re.findall(r"add_executable\s*\(\s*([A-Za-z0-9_.-]+)", cmake)
     firmware_names = [name for name in executable_names if not name.startswith("mbr_test_")]
-    if firmware_names != ["mouse_bridge_remapper"]:
-        fail(f"unexpected production firmware executable targets: {firmware_names}")
+    allowed = {"mouse_bridge_remapper", "mbr_renderer_hat_qualification"}
+    unexpected = [name for name in firmware_names if name not in allowed]
+    if unexpected:
+        fail(f"unexpected firmware executable targets: {unexpected}")
+    if "mouse_bridge_remapper" not in firmware_names:
+        fail("production firmware executable target is missing")
 
 
 def check_toolchain_lock() -> None:
