@@ -4,7 +4,7 @@ Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing BLE HOGP 
 
 This repository follows **documentation as product, code as consequence**. The manual and architecture are the product contract; firmware must implement them rather than redefine them.
 
-> Current status: **MBR-00 product/architecture contract frozen. Firmware implementation has not started.**
+> Current status: **MBR-01 clean bootstrap and architecture scaffold implemented. Behavioral firmware features begin in later gates and are not implied by this scaffold.**
 
 ## Product in one paragraph
 
@@ -81,6 +81,12 @@ MBR-00 freezes:
 - no serial string and no diagnostic CDC/debug interface
 
 This local/development VID convention is not a claim of USB-IF commercial vendor allocation.
+
+## Implementation status
+
+MBR-01 adds the compileable host/Pico 2 W scaffold, frozen module dependency graph, a single authoritative Mouse-session slot, a separate non-authoritative Pair New candidate scaffold, architecture ownership guards and CI/toolchain locking. See [MBR-01 implementation scaffold](docs/implementation/00-mbr01-bootstrap.md).
+
+It does not yet implement the canonical UI state machine, physical renderer/HAT, final USB HID descriptor behavior, live BLE HOGP forwarding, profiles/persistence/HID++ or saved/new lifecycle orchestration. Those remain owned by their later gates.
 
 ## Documentation map
 
