@@ -15,6 +15,39 @@ typedef struct {
 } mbr_mouse_session_id_t;
 
 typedef enum {
+    MBR_MOUSE_BUTTON_LEFT = 0,
+    MBR_MOUSE_BUTTON_RIGHT,
+    MBR_MOUSE_BUTTON_MIDDLE,
+    MBR_MOUSE_BUTTON_FORWARD,
+    MBR_MOUSE_BUTTON_BACKWARD,
+    MBR_MOUSE_BUTTON_COUNT
+} mbr_mouse_button_t;
+
+typedef enum {
+    MBR_MOUSE_EVENT_BUTTON = 0,
+    MBR_MOUSE_EVENT_MOVE,
+    MBR_MOUSE_EVENT_WHEEL
+} mbr_mouse_event_type_t;
+
+typedef struct {
+    mbr_mouse_event_type_t type;
+    union {
+        struct {
+            mbr_mouse_button_t button;
+            bool pressed;
+        } button;
+        struct {
+            int16_t dx;
+            int16_t dy;
+        } move;
+        struct {
+            int16_t vertical;
+            int16_t horizontal;
+        } wheel;
+    } data;
+} mbr_mouse_event_t;
+
+typedef enum {
     MBR_CONTROL_JOY_UP = 0,
     MBR_CONTROL_JOY_DOWN,
     MBR_CONTROL_JOY_LEFT,
