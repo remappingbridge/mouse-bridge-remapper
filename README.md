@@ -88,7 +88,7 @@ MBR-01 established the compileable host/Pico 2 W scaffold, frozen module depende
 
 MBR-02 implements the canonical interaction engine, HOME/search transaction model, Pair New candidate/handoff projection, profile/Custom/removal confirmation semantics and semantic UI projector. All 30 canonical screens are golden-tested as host-pure state, including exact literals, dynamic fields, name policy, colors and didactic token columns. See [MBR-02 host-pure UX model](docs/implementation/01-mbr02-host-ux.md).
 
-MBR-03 now implements the production ST7789 renderer and debounced HAT input path, plus an isolated non-production qualification firmware for physical screen coverage. The project still does **not** claim physical acceptance, final USB HID descriptors/reports, live BLE HOGP forwarding, persistent flash state or Logitech HID++ behavior.
+MBR-03 implements the production ST7789 renderer and debounced HAT input path, plus an isolated non-production qualification firmware for physical screen coverage. See [MBR-03 renderer/HAT implementation](docs/implementation/02-mbr03-renderer-hat.md). Physical acceptance is still pending; final USB HID descriptors/reports, live BLE HOGP forwarding, persistent flash state and Logitech HID++ behavior remain later gates.
 
 The connected HOME flow is explicit: the connected Mouse name is the title, `PAIR NEW MOUSE` is the first option, the current remap summary is the second, `SAVED DEVICES` the third and `LEARN THE KEYS` the fourth. `PAIR NEW MOUSE` is the documented visible entry into the existing replacement transaction while the current Mouse remains live.
 
@@ -115,6 +115,12 @@ The connected HOME flow is explicit: the connected Mouse name is the title, `PAI
 8. [UI and renderer contract](docs/architecture/07-ui-renderer.md)
 9. [Verification and invariants](docs/architecture/08-verification-invariants.md)
 10. [MBR-00 frozen decisions](docs/architecture/09-open-decisions.md)
+
+## Implementation artifacts
+
+- [MBR-01 bootstrap](docs/implementation/00-mbr01-bootstrap.md)
+- [MBR-02 host UX](docs/implementation/01-mbr02-host-ux.md)
+- [MBR-03 renderer/HAT](docs/implementation/02-mbr03-renderer-hat.md)
 
 ## Scope boundary
 
