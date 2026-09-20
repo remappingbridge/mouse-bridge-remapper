@@ -4,7 +4,7 @@ Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing BLE HOGP 
 
 This repository follows **documentation as product, code as consequence**. The manual and architecture are the product contract; firmware must implement them rather than redefine them.
 
-> Current status: **MBR-01 clean bootstrap and architecture scaffold implemented. Behavioral firmware features begin in later gates and are not implied by this scaffold.**
+> Current status: **MBR-02 host-pure interaction/state/projector implemented. The canonical UX is executable and golden-tested on the host; physical rendering, USB HID and Bluetooth behavior remain later gates.**
 
 ## Product in one paragraph
 
@@ -84,9 +84,11 @@ This local/development VID convention is not a claim of USB-IF commercial vendor
 
 ## Implementation status
 
-MBR-01 adds the compileable host/Pico 2 W scaffold, frozen module dependency graph, a single authoritative Mouse-session slot, a separate non-authoritative Pair New candidate scaffold, architecture ownership guards and CI/toolchain locking. See [MBR-01 implementation scaffold](docs/implementation/00-mbr01-bootstrap.md).
+MBR-01 established the compileable host/Pico 2 W scaffold, frozen module dependency graph, single authoritative Mouse-session slot, separate non-authoritative Pair New candidate scaffold, architecture ownership guards and CI/toolchain locking. See [MBR-01 implementation scaffold](docs/implementation/00-mbr01-bootstrap.md).
 
-It does not yet implement the canonical UI state machine, physical renderer/HAT, final USB HID descriptor behavior, live BLE HOGP forwarding, profiles/persistence/HID++ or saved/new lifecycle orchestration. Those remain owned by their later gates.
+MBR-02 implements the canonical interaction engine, HOME/search transaction model, Pair New candidate/handoff projection, profile/Custom/removal confirmation semantics and semantic UI projector. All 30 canonical screens are golden-tested as host-pure state, including exact literals, dynamic fields, name policy, colors and didactic token columns. See [MBR-02 host-pure UX model](docs/implementation/01-mbr02-host-ux.md).
+
+The project still does **not** claim physical renderer/HAT behavior, final USB HID descriptors/reports, live BLE HOGP forwarding, persistent flash state or Logitech HID++ behavior. Those remain owned by later gates.
 
 ## Documentation map
 
