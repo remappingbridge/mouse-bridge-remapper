@@ -1,6 +1,6 @@
 # Canonical screen reference
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 UX DECISION 2026-09-20**.
 
 This document is the executable user-facing screen inventory. Parenthetical annotations from historical planning are metadata and are never rendered. Unless explicitly stated otherwise, rows fit the 21-character semantic width.
 
