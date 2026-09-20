@@ -1,0 +1,4 @@
+build-host/
+build-pico/
+__pycache__/
+*.pyc
