@@ -28,7 +28,7 @@ jobs:
           sudo apt-get install -y "gcc-arm-none-eabi=${ARM_GCC_PACKAGE_VERSION}" libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
           git clone --depth 1 --branch "$PICO_SDK_VERSION" https://github.com/raspberrypi/pico-sdk.git "$RUNNER_TEMP/pico-sdk"
           test "$(git -C "$RUNNER_TEMP/pico-sdk" rev-parse HEAD)" = a1438dff1d38bd9c65dbd693f0e5db4b9ae91779
-          git -C "$RUNNER_TEMP/pico-sdk" submodule update --init --depth 1 lib/tinyusb lib/btstack lib/cyw43-driver
+          git -C "$RUNNER_TEMP/pico-sdk" submodule update --init --depth 1 lib/tinyusb lib/btstack lib/cyw43-driver lib/lwip
       - name: Build both firmware targets
         run: |
           export PICO_SDK_PATH="$RUNNER_TEMP/pico-sdk"

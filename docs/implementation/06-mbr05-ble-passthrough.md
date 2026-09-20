@@ -86,3 +86,7 @@ Only the operator may close physical MBR-05. MBR-06 remains blocked until then.
 Local ASan/UBSan passes with `ASAN_OPTIONS=detect_leaks=0`; LeakSanitizer itself
 cannot run under this workspace tracer. Firmware core uses no dynamic allocation.
 Build retains G06 `CYW43_LWIP=0` and bounded HCI process loop count 8.
+
+SDK 2.2.0 requires `lib/lwip` to be initialized to declare its accepted
+`pico_cyw43_arch_threadsafe_background` CMake target. lwIP/Wi-Fi remain disabled
+by `CYW43_LWIP=0`; this is a configure dependency, not a product network feature.

@@ -149,7 +149,7 @@ cmake --build build-host --parallel
 ctest --test-dir build-host --output-on-failure
 
 export PICO_SDK_PATH=/path/to/pico-sdk-2.2.0
-# Initialize the pinned SDK's lib/tinyusb, lib/btstack and lib/cyw43-driver submodules.
+# Initialize the pinned SDK's lib/tinyusb, lib/btstack, lib/cyw43-driver and lib/lwip submodules.
 cmake -S . -B build-pico -DMBR_BUILD_PICO=ON -DPICO_BOARD=pico2_w -DCMAKE_BUILD_TYPE=Release
 cmake --build build-pico --parallel
 python3 tools/verify_uf2.py build-pico/*.uf2
