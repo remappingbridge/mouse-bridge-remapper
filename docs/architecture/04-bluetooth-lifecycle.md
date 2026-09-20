@@ -1,12 +1,22 @@
 # Bluetooth lifecycle and pairing
 
-Status: **FROZEN BY MBR-00**.
+Status: **FROZEN BY MBR-00; MBR-05 IMPLEMENTED FOR CANONICAL HOGP MOUSE TRANSPORT**.
 
 ## Transport scope
 
 Production Mouse transport is **BLE HOGP only**. Bluetooth Classic Mouse, Bluetooth Keyboard input and Bluetooth Composite product support are out of scope.
 
-Exactly one module owns CYW43/BTstack initialization, lifecycle and run-loop integration.
+Exactly one module owns CYW43/BTstack initialization, lifecycle and run-loop integration. MBR-05 implements that owner with `pico_cyw43_arch_threadsafe_background`.
+
+## MBR-05 live Mouse transport
+
+The transport pipeline is:
+
+```text
+CYW43/BTstack -> advertisement filter -> LE security/bonding -> HIDS Report Protocol -> Report Map -> canonical mbr_mouse_event_t -> bounded runtime queue -> session filter -> mbr_output_state_t -> USB HID Mouse
+```
+
+The adapter recognizes five Mouse buttons, relative X/Y, wheel and Consumer AC Pan. It rejects keyboard-only Report Maps, normalizes duplicated Report-ID framing and rejects malformed/truncated reports.
 
 ## Session identities
 
