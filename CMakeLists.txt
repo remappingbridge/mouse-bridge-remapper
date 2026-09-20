@@ -36,8 +36,9 @@ mbr_declare_contract_modules()
 foreach(module IN LISTS MBR_MODULES)
     add_library(mbr_impl_${module} STATIC src/${module}/${module}.c)
     target_include_directories(mbr_impl_${module} PUBLIC include)
-    target_link_libraries(mbr_module_${module} INTERFACE mbr_impl_${module})
 endforeach()
+
+mbr_wire_contract_modules()
 
 target_compile_definitions(mbr_impl_domain PUBLIC MBR_VERSION_STRING="0.1.0-mbr01")
 
@@ -48,6 +49,10 @@ if(MBR_BUILD_TESTS)
     add_executable(mbr_test_bootstrap tests/test_bootstrap.c)
     target_link_libraries(mbr_test_bootstrap PRIVATE mbr_module_app)
     add_test(NAME bootstrap_contract COMMAND mbr_test_bootstrap)
+
+    add_executable(mbr_test_ux tests/test_ux.c)
+    target_link_libraries(mbr_test_ux PRIVATE mbr_module_app)
+    add_test(NAME ux_contract COMMAND mbr_test_ux)
 
     add_test(
         NAME architecture_contract
