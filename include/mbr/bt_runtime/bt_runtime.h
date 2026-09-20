@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-#define MBR_BT_RUNTIME_MESSAGE_PAYLOAD_SIZE 64u
+#define MBR_BT_RUNTIME_MESSAGE_PAYLOAD_SIZE 80u
 #define MBR_BT_RUNTIME_QUEUE_CAPACITY 128u
 
 typedef struct {
