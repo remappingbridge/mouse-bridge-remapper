@@ -61,8 +61,14 @@ def source_files() -> list[Path]:
         if not base.exists():
             continue
         for path in base.rglob("*"):
-            if path.is_file() and path.suffix.lower() in {".c", ".h", ".cc", ".cpp", ".hpp"}:
-                result.append(path)
+            if not path.is_file() or path.suffix.lower() not in {".c", ".h", ".cc", ".cpp", ".hpp"}:
+                continue
+            # TinyUSB's compile-time configuration is an ownership-boundary
+            # file consumed by the usb_hid adapter, not an implementation
+            # module and therefore has no module_for() owner.
+            if path == ROOT / "include" / "tusb_config.h":
+                continue
+            result.append(path)
     return result
 
 
