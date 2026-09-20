@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.20)
 
 option(MBR_BUILD_PICO "Build Raspberry Pi Pico 2 W production scaffold" OFF)
 option(MBR_BUILD_TESTS "Build host tests" ON)
+option(MBR_BUILD_PICO_QUALIFICATION "Build the MBR-03 renderer/HAT qualification firmware" OFF)
 
 if(MBR_BUILD_PICO)
     if((NOT DEFINED PICO_SDK_PATH OR PICO_SDK_PATH STREQUAL "") AND
@@ -40,6 +41,13 @@ endforeach()
 
 mbr_wire_contract_modules()
 
+if(MBR_BUILD_PICO)
+    target_compile_definitions(mbr_impl_renderer PRIVATE MBR_PLATFORM_PICO=1)
+    target_compile_definitions(mbr_impl_hat PRIVATE MBR_PLATFORM_PICO=1)
+    target_link_libraries(mbr_impl_renderer PUBLIC pico_stdlib hardware_gpio hardware_spi)
+    target_link_libraries(mbr_impl_hat PUBLIC pico_stdlib hardware_gpio)
+endif()
+
 target_compile_definitions(mbr_impl_domain PUBLIC MBR_VERSION_STRING="0.1.0-mbr01")
 
 if(MBR_BUILD_TESTS)
@@ -72,4 +80,12 @@ if(MBR_BUILD_PICO)
     pico_enable_stdio_usb(mouse_bridge_remapper 0)
     pico_enable_stdio_uart(mouse_bridge_remapper 0)
     pico_add_extra_outputs(mouse_bridge_remapper)
+endif()
+
+if(MBR_BUILD_PICO AND MBR_BUILD_PICO_QUALIFICATION)
+    add_executable(mbr_renderer_hat_qualification tests/pico_renderer_hat_qualification.c)
+    target_link_libraries(mbr_renderer_hat_qualification PRIVATE pico_stdlib mbr_module_app)
+    pico_enable_stdio_usb(mbr_renderer_hat_qualification 0)
+    pico_enable_stdio_uart(mbr_renderer_hat_qualification 0)
+    pico_add_extra_outputs(mbr_renderer_hat_qualification)
 endif()
