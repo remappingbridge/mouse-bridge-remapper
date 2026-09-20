@@ -74,7 +74,7 @@ static void menu(MbrFrame *f,const char *title) {
 void mbr_qualification_frame(const MbrQualification *q,const MbrApp *a,MbrFrame *f) {
  if(q->mode==2) { MbrView v;mbr_app_view(a,&v);mbr_project(&v,f);return; }
  if(q->mode==1) {
-  MbrApp fixture;memset(&fixture,0,sizeof(fixture));seed(&fixture,(MbrScreen)q->gallery);MbrView v;mbr_app_view(&fixture,&v);v.pressed=q->interaction.pressed;mbr_project(&v,f);return;
+  static MbrApp fixture;memset(&fixture,0,sizeof(fixture));seed(&fixture,(MbrScreen)q->gallery);MbrView v;mbr_app_view(&fixture,&v);v.pressed=q->interaction.pressed;mbr_project(&v,f);return;
  }
  if(q->mode==0) {
   menu(f,"MBR-04 QUALIFICATION");mbr_frame_text(f,1,0,"RAM FIXTURES ONLY",MBR_BODY);

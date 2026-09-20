@@ -43,7 +43,7 @@ CMake host Debug build with `-Wall -Wextra -Werror`, assertions explicitly enabl
 
 Pico toolchain: Ubuntu 24.04; ARM GCC `13.2.1 20231009` (package `15:13.2.rel1-2`); Pico SDK `2.2.0` at `a1438dff1d38bd9c65dbd693f0e5db4b9ae91779`; TinyUSB `86ad6e56c1700e85f1c5678607a762cfe3aa2f47`; Picotool 2.2.0; CMake 3.28.3. Target `pico2_w`, `rp2350-arm-s`, Release. Local toolchain packages were extracted into a private toolchain directory; commands are the README commands with that toolchain on PATH. Newlib 4.4.0.20231231-2.
 
-Both target builds succeed. UF2 verification checks magic, 256-byte payload, unique sequence/address coverage, Pico SDK's absolute-family ignore extension, RP2350 ARM-S family and Pico 2 W flash range. Artifact hashes/sizes are recorded in the delivery manifest. Physical evidence: **NOT RUN / DEFERRED BY USER** for MBR-03 and MBR-04.
+Large long-lived application/HAT/frame structures and the gallery fixture are statically allocated. The target reserves the full 4 KiB SCRATCH_Y stack bank, avoiding dependence on the default small stack. Both target builds succeed. UF2 verification checks magic, 256-byte payload, unique sequence/address coverage, Pico SDK's absolute-family ignore extension, RP2350 ARM-S family and Pico 2 W flash range. Artifact hashes/sizes are recorded in the delivery manifest. Physical evidence: **NOT RUN / DEFERRED BY USER** for MBR-03 and MBR-04.
 
 ### Limits and next gate
 

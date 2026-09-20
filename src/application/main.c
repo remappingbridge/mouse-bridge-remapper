@@ -9,10 +9,10 @@
 #include <string.h>
 static uint16_t pixels[240*240];
 int main(void) {
- MbrApp app;MbrHat hat={0};MbrFrame frame,previous;bool have_frame=false;unsigned flush_y=240;
+ static MbrApp app;static MbrHat hat;static MbrFrame frame,previous;bool have_frame=false;unsigned flush_y=240;
  mbr_app_init(&app,to_ms_since_boot(get_absolute_time()));mbr_hat_init();mbr_display_init();mbr_usb_init();
 #ifdef MBR_QUALIFICATION
- MbrQualification qualification;mbr_qualification_init(&qualification);
+ static MbrQualification qualification;mbr_qualification_init(&qualification);
 #endif
  uint32_t scan=0;
  for(;;) {
