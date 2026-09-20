@@ -100,8 +100,9 @@ static unsigned option_count(const mbr_ux_model_t *model)
     switch (model->screen) {
     case MBR_SCREEN_HOME_SEARCHING:
     case MBR_SCREEN_HOME_RETRY:
-    case MBR_SCREEN_HOME_CONNECTED:
         return 3u;
+    case MBR_SCREEN_HOME_CONNECTED:
+        return 4u;
     case MBR_SCREEN_REMAPPER_OPTIONS:
         return 4u;
     case MBR_SCREEN_CUSTOM_EDIT:
@@ -252,12 +253,14 @@ static void access_home_option(mbr_ux_model_t *model, mbr_ux_effects_t *effects)
     }
 }
 
-static void access_connected_home_option(mbr_ux_model_t *model)
+static void access_connected_home_option(mbr_ux_model_t *model,
+                                         mbr_ux_effects_t *effects)
 {
     switch (model->selection) {
-    case 0u: set_screen(model, MBR_SCREEN_REMAPPER_OPTIONS); break;
-    case 1u: enter_saved_devices(model); break;
-    case 2u: set_screen(model, MBR_SCREEN_LEARN_THE_KEYS); break;
+    case 0u: start_pair_new(model, effects); break;
+    case 1u: set_screen(model, MBR_SCREEN_REMAPPER_OPTIONS); break;
+    case 2u: enter_saved_devices(model); break;
+    case 3u: set_screen(model, MBR_SCREEN_LEARN_THE_KEYS); break;
     default: break;
     }
 }
@@ -361,7 +364,7 @@ void mbr_ux_input(mbr_ux_model_t *model,
         else if (control == MBR_CONTROL_KEY_X) enter_help(model, MBR_SCREEN_HELP_RETRY_PAIR_NEW);
         break;
     case MBR_SCREEN_HOME_CONNECTED:
-        if (control == MBR_CONTROL_JOY_PRESS) access_connected_home_option(model);
+        if (control == MBR_CONTROL_JOY_PRESS) access_connected_home_option(model, effects);
         else if (control == MBR_CONTROL_KEY_X) enter_help(model, MBR_SCREEN_HELP_HOME_CONNECTED);
         break;
     case MBR_SCREEN_REMAPPER_OPTIONS:
