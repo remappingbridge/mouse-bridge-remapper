@@ -19,6 +19,18 @@ static MbrApp app;
 static SimPersistentState persistent;
 static uint16_t pixels[MBR_LCD_WIDTH * MBR_LCD_HEIGHT];
 static uint32_t now_ms;
+static unsigned backlight_gain_percent = 300u;
+
+static unsigned effective_backlight_percent(void)
+{
+    return app.locked ? 0u : backlight_gain_percent;
+}
+
+static unsigned char apply_backlight(unsigned char value, unsigned gain_percent)
+{
+    unsigned scaled = ((unsigned)value * gain_percent + 50u) / 100u;
+    return (unsigned char)(scaled > 255u ? 255u : scaled);
+}
 
 static const char *search_name(MbrSearch search)
 {
@@ -125,8 +137,7 @@ static bool write_ppm(const char *path)
     mbr_app_view(&app, &view);
     mbr_project(&view, &frame);
     mbr_render(&frame, pixels);
-    if (app.locked)
-        memset(pixels, 0, sizeof(pixels));
+    const unsigned effective_gain = effective_backlight_percent();
 
     FILE *file = fopen(path, "wb");
     if (file == NULL) return false;
@@ -136,10 +147,15 @@ static bool write_ppm(const char *path)
     }
     for (unsigned i = 0; i < MBR_LCD_WIDTH * MBR_LCD_HEIGHT; ++i) {
         const uint16_t pixel = pixels[i];
-        const unsigned char rgb[3] = {
+        const unsigned char native_rgb[3] = {
             (unsigned char)(((pixel >> 11u) & 31u) * 255u / 31u),
             (unsigned char)(((pixel >> 5u) & 63u) * 255u / 63u),
             (unsigned char)((pixel & 31u) * 255u / 31u)
+        };
+        const unsigned char rgb[3] = {
+            apply_backlight(native_rgb[0], effective_gain),
+            apply_backlight(native_rgb[1], effective_gain),
+            apply_backlight(native_rgb[2], effective_gain)
         };
         if (fwrite(rgb, 1u, sizeof(rgb), file) != sizeof(rgb)) {
             fclose(file);
@@ -153,10 +169,12 @@ static void print_state(const char *result)
 {
     MbrView view;
     mbr_app_view(&app, &view);
-    printf("%s\t%s\tlocked=%u\tsearch=%s\tcount=%u\tconnected=%u\tselection=%u\tpage=%u\tname=%s\n",
+    printf("%s\t%s\tlocked=%u\tbacklight=%u\teffective_backlight=%u\tsearch=%s\tcount=%u\tconnected=%u\tselection=%u\tpage=%u\tname=%s\n",
            result,
            app.screen < MBR_SCREEN_COUNT ? mbr_screens[app.screen].id : "invalid",
            app.locked ? 1u : 0u,
+           backlight_gain_percent,
+           effective_backlight_percent(),
            search_name(app.search.purpose),
            (unsigned)app.registry.count,
            app.sessions.live.ready ? 1u : 0u,
@@ -227,6 +245,16 @@ static const char *execute(char *line)
         return "OK";
     }
 
+    if (strcmp(command, "brightness") == 0) {
+        errno = 0;
+        char *end = NULL;
+        const unsigned long gain = strtoul(arg, &end, 10);
+        if (errno != 0 || end == arg || *skip_space(end) != '\0' || gain > 400u)
+            return "ERR brightness-must-be-0-to-400";
+        backlight_gain_percent = (unsigned)gain;
+        return "OK";
+    }
+
     if (strcmp(command, "home") == 0) {
         mbr_app_home(&app);
         return "OK";
@@ -258,13 +286,25 @@ static const char *execute(char *line)
 static int smoke_test(void)
 {
     now_ms = 0;
+    backlight_gain_percent = 300u;
     memset(&persistent, 0, sizeof(persistent));
     mbr_app_init(&app, now_ms);
     assert(app.screen == MBR_SCREEN_SEARCHING_FIRST);
+    assert(apply_backlight(8u, 100u) == 8u);
+    assert(apply_backlight(8u, 300u) == 24u);
+    assert(apply_backlight(200u, 200u) == 255u);
+    assert(apply_backlight(0u, 400u) == 0u);
+    assert(effective_backlight_percent() == 300u);
     assert(connect_mouse(1u, "LOGITECH LIFT"));
     assert(app.screen == MBR_SCREEN_FIRST_MOUSE_CONNECTED);
     tap(MBR_Y);
     assert(app.screen == MBR_SCREEN_HOME_CONNECTED);
+    tap(MBR_Y);
+    assert(app.locked);
+    assert(effective_backlight_percent() == 0u);
+    tap(MBR_X);
+    assert(!app.locked);
+    assert(effective_backlight_percent() == 300u);
     tap(MBR_DOWN);
     tap(MBR_PRESS);
     assert(app.screen == MBR_SCREEN_REMAPPER_OPTIONS);
@@ -303,6 +343,7 @@ int main(int argc, char **argv)
 
     const char *frame_path = argv[1];
     now_ms = 0;
+    backlight_gain_percent = 300u;
     memset(&persistent, 0, sizeof(persistent));
     mbr_app_init(&app, now_ms);
     if (!write_ppm(frame_path)) {
