@@ -24,8 +24,8 @@ Saved search lasts **8 seconds**. The first saved Mouse that reaches ready state
 ## HOME with a connected Mouse
 
 ```text
-MOUSE CONNECTED
 LOGITECH LIFT
+ PAIR NEW MOUSE
  REMAPPED TO ESCAPE
  SAVED DEVICES
  LEARN THE KEYS
@@ -35,7 +35,7 @@ JOY PRESS: ACCESS
 KEY X: HELP TO REMOVE
 ```
 
-Line 2 is always the sole connected Mouse name. The remap summary belongs to that same Mouse and reflects only confirmed runtime+persistent profile state.
+The title is always the display name of the sole connected Mouse. The four visible options are, in order: `PAIR NEW MOUSE`, the current confirmed remap summary, `SAVED DEVICES`, and `LEARN THE KEYS`. The remap summary belongs to that same Mouse and reflects only confirmed runtime+persistent profile state. Selecting `PAIR NEW MOUSE` enters the existing 15-second new-only replacement search without disconnecting the current Mouse. Selecting the remap summary opens `remapper-options` for this Mouse.
 
 ## Disconnect/power-off
 
