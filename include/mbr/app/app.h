@@ -51,6 +51,9 @@ bool mbr_ux_saved_mouse_ready(mbr_ux_model_t *model,
                               uint32_t transaction_id,
                               mbr_mouse_id_t mouse_id,
                               mbr_mouse_session_id_t session_id);
+bool mbr_ux_mouse_reconnected(mbr_ux_model_t *model,
+                              mbr_mouse_id_t mouse_id,
+                              mbr_mouse_session_id_t session_id);
 bool mbr_ux_pair_new_candidate_ready(mbr_ux_model_t *model,
                                      uint32_t transaction_id,
                                      mbr_mouse_id_t mouse_id,
