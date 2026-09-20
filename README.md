@@ -4,7 +4,7 @@ Mouse Bridge Remapper is a Raspberry Pi Pico 2 W appliance for pairing BLE HOGP 
 
 This repository follows **documentation as product, code as consequence**. The manual and architecture are the product contract; firmware must implement them rather than redefine them.
 
-> Current status: **MBR-02 COMPLETE / ACCEPTED. The canonical UX is executable and golden-tested on the host; physical rendering, USB HID and Bluetooth behavior remain later gates.**
+> Current status: **MBR-03 IMPLEMENTED / PHYSICAL ACCEPTANCE PENDING. The canonical UX is host-golden-tested and the Waveshare ST7789/HAT candidate is built; USB HID and Bluetooth behavior remain later gates.**
 
 ## Product in one paragraph
 
@@ -88,7 +88,7 @@ MBR-01 established the compileable host/Pico 2 W scaffold, frozen module depende
 
 MBR-02 implements the canonical interaction engine, HOME/search transaction model, Pair New candidate/handoff projection, profile/Custom/removal confirmation semantics and semantic UI projector. All 30 canonical screens are golden-tested as host-pure state, including exact literals, dynamic fields, name policy, colors and didactic token columns. See [MBR-02 host-pure UX model](docs/implementation/01-mbr02-host-ux.md).
 
-The project still does **not** claim physical renderer/HAT behavior, final USB HID descriptors/reports, live BLE HOGP forwarding, persistent flash state or Logitech HID++ behavior. Those remain owned by later gates.
+MBR-03 now implements the production ST7789 renderer and debounced HAT input path, plus an isolated non-production qualification firmware for physical screen coverage. The project still does **not** claim physical acceptance, final USB HID descriptors/reports, live BLE HOGP forwarding, persistent flash state or Logitech HID++ behavior.
 
 The connected HOME flow is explicit: the connected Mouse name is the title, `PAIR NEW MOUSE` is the first option, the current remap summary is the second, `SAVED DEVICES` the third and `LEARN THE KEYS` the fourth. `PAIR NEW MOUSE` is the documented visible entry into the existing replacement transaction while the current Mouse remains live.
 
@@ -119,3 +119,8 @@ The connected HOME flow is explicit: the connected Mouse name is the title, `PAI
 ## Scope boundary
 
 There are no Pair Keyboard, Pair Composite, Bluetooth Keyboard input, Bluetooth Composite product, or simultaneous-live-Mouse features. Synthetic USB Escape does not reopen those scopes.
+
+
+## MBR-03 status
+
+The renderer/HAT implementation is complete on branch `mbr/mbr-03-renderer-hat` pending automated CI and physical acceptance. The exact candidate UF2 is produced by CI; the physical qualification firmware cycles all 30 canonical screens and exercises the same renderer/HAT modules without enabling serial or CDC diagnostics.
