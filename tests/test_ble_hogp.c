@@ -98,7 +98,7 @@ static int test_report_id_framing(void)
     CHECK(mbr_ble_hogp_parser_configure(
         &parser, k_report_id_mouse_map, sizeof(k_report_id_mouse_map)));
 
-    const uint8_t framed[5] = {2u, 0x01u, 3u, (uint8_t)-4, 0u};
+    const uint8_t framed[5] = {2u, 0x00u, 3u, (uint8_t)-4, 0u};
     const uint8_t *payload = NULL;
     size_t payload_len = 0u;
     CHECK(mbr_ble_hogp_parser_normalize_report(
