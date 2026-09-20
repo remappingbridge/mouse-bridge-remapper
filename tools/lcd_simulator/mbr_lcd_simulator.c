@@ -84,6 +84,15 @@ static void tap(MbrControl control)
     mbr_app_event(&app, control, false);
 }
 
+static void settle_requests(void)
+{
+    while (app.request.kind != MBR_OP_NONE && app.request.kind != MBR_OP_HANDOFF) {
+        const uint32_t token = app.request.token;
+        if (!mbr_app_confirm(&app, token, true)) break;
+        persist_from_app();
+    }
+}
+
 static bool connect_mouse(MouseId id, const char *name)
 {
     if (id == 0 || name == NULL || *name == '\0') return false;
@@ -256,6 +265,17 @@ static int smoke_test(void)
     assert(app.screen == MBR_SCREEN_FIRST_MOUSE_CONNECTED);
     tap(MBR_Y);
     assert(app.screen == MBR_SCREEN_HOME_CONNECTED);
+    tap(MBR_DOWN);
+    tap(MBR_PRESS);
+    assert(app.screen == MBR_SCREEN_REMAPPER_OPTIONS);
+    tap(MBR_DOWN);
+    tap(MBR_PRESS);
+    assert(app.screen == MBR_SCREEN_STANDARD_NOT_ACTIVE);
+    tap(MBR_A);
+    settle_requests();
+    assert(app.screen == MBR_SCREEN_STANDARD_ACTIVE);
+    mbr_app_home(&app);
+    app.selection = 0;
     tap(MBR_PRESS);
     assert(app.screen == MBR_SCREEN_PAIR_NEW);
     assert(connect_mouse(2u, "GENERIC MOUSE"));
@@ -297,6 +317,7 @@ int main(int argc, char **argv)
         trim_end(line);
         if (strcmp(skip_space(line), "quit") == 0) break;
         const char *result = execute(line);
+        if (strncmp(result, "OK", 2u) == 0) settle_requests();
         if (!write_ppm(frame_path)) {
             print_state("ERR frame-write");
             continue;
