@@ -1,8 +1,22 @@
 # Verification and invariants
 
-Status: **FROZEN BY MBR-00; AMENDED BY MBR-02 AND HOME-SEARCHING HELP DECISIONS 2026-09-20; MBR-03 IMPLEMENTED**.
+Status: **FROZEN BY MBR-00; AMENDED BY MBR-02, MBR-03, MBR-04 AND MBR-05**.
 
 These are mandatory implementation/test properties.
+
+## MBR-05 BLE/HOGP invariants
+
+1. Exactly one CYW43/BTstack runtime owner exists.
+2. Keyboard-only Report Maps are rejected.
+3. Mouse acceptance is based on the HOGP Report Map, not advertisement appearance alone.
+4. Supported canonical fields are five Mouse buttons, relative X/Y, wheel and horizontal pan.
+5. Duplicated Report-ID framing is normalized; mismatched framing is rejected.
+6. Truncated/malformed reports are rejected before canonical event emission.
+7. Every READY connection has a non-zero session generation.
+8. Stale session events cannot mutate current Mouse output.
+9. Bonded reconnect uses the BTstack device database/resolving/whitelist path with an 8-second connection-attempt bound.
+10. Disconnect and runtime queue overflow clear held and pending output.
+11. BLE servicing requires no USB/UART diagnostic stdio.
 
 ## Architecture invariants
 
