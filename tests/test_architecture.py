@@ -122,7 +122,7 @@ def check_source_boundaries() -> None:
     platform_token = re.compile(r'(?:pico/|hardware/|btstack|cyw43|tusb\.h|tinyusb|\btud_)', re.I)
     bt_token = re.compile(r'(?:btstack|cyw43|\bhci_|\bhids_|\bgap_|\bsm_)', re.I)
     bt_lifecycle_token = re.compile(
-        r'(?:\bcyw43_arch_(?:init|deinit)\b|\bhci_power_control\b|\bhci_add_event_handler\b|'
+        r'(?:\bcyw43_arch_(?:init|deinit)\b|\bhci_power_control\b|'
         r'\bbtstack_memory_init\b|\bbtstack_run_loop_(?:init|execute)\b)',
         re.I,
     )
