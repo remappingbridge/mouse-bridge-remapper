@@ -3,6 +3,16 @@ int mbr_bt_runtime_scaffold(void)
     return 0;
 }
 
+#ifndef MBR_PLATFORM_PICO
+
+bool mbr_bt_runtime_start(mbr_bt_runtime_session_setup_fn session_setup)
+{
+    (void)session_setup;
+    return false;
+}
+
+#endif
+
 #ifdef MBR_PLATFORM_PICO
 
 #include "btstack.h"
