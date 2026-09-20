@@ -27,7 +27,7 @@ git switch experimental/mbr08-integrated-recovery-20260920
 python3 tools/lcd_simulator.py --build
 ```
 
-The default scale is 3×, so the 240×240 LCD appears as a 720×720 virtual panel. Use `--zoom 1`, `2`, `3` or `4` to choose another initial scale. The desktop shell uses a dark theme.
+The default scale is **300%**, so the 240×240 LCD appears as a 720×720 virtual panel. Available scales are **75%, 100%, 125%, 150%, 200% and 300%**. Use `--scale 75`, `100`, `125`, `150`, `200` or `300` to choose the initial scale. The desktop shell uses a dark theme.
 
 If the backend is already built:
 
@@ -41,7 +41,7 @@ python3 tools/lcd_simulator.py
 The RGB565 values are not changed in firmware or in the logical simulator framebuffer. Instead, the desktop viewer applies one global gain to the converted RGB channels:
 
 - `100%`: digital RGB565 reference;
-- `200%`, `300%`, `400%`: progressively brighter inspection gain applied equally to red, green and blue, with each channel saturated at 255;
+- `0–1000%`: adjustable inspection gain applied equally to red, green and blue, with each channel saturated at 255;
 - `0%`: backlight off;
 - application Lock: always forces **effective 0%**, regardless of the selected gain.
 
@@ -69,8 +69,9 @@ Toolbar:
 - HOME: run the HOME resolver;
 - REBOOT: restart the application while preserving simulated product state;
 - FACTORY RESET: restart with no saved product state;
-- LCD backlight slider: 0–400% in 10% steps;
-- quick backlight presets: 100%, 200%, 300% and 400%.
+- LCD backlight slider: **0–1000%** in 10% steps;
+- quick backlight presets: **100%, 300%, 500%, 750% and 1000%**;
+- LCD visual scale presets: **75%, 100%, 125%, 150%, 200% and 300%**.
 
 CONNECT intentionally obeys the real search eligibility rules. For example, a saved Mouse cannot win a Pair New search, and a new Mouse cannot win SEARCH_SAVED.
 
@@ -84,7 +85,7 @@ CONNECT intentionally obeys the real search eligibility rules. For example, a sa
 6. REBOOT with saved devices and inject a saved ID to test saved reconnect.
 7. Open Help during a search, advance time, and verify that returning does not reset the search deadline.
 8. Use long names and names containing MOUSE to inspect HOME/Saved Devices truncation and suffix rules.
-9. Set backlight to 300% or 400% and compare black, dark magenta, gray, white and cyan; every non-black color must respond to the same global gain.
+9. Sweep backlight from 100% through 1000% and compare black, dark magenta, gray, white and cyan; every non-black color must respond to the same global gain.
 10. Set a nonzero gain, activate Lock with the screen's KEY Y control, and verify effective backlight becomes 0% while application state remains alive; unlock and verify the previous gain is restored.
 
 For raw layout inspection without navigation, the backend protocol also supports `screen <canonical-screen-id>`.
@@ -99,7 +100,7 @@ down a
 up a
 connect 1 LOGITECH LIFT
 disconnect
-brightness 300
+brightness 1000
 tick 8000
 home
 reboot
