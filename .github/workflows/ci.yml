@@ -1,0 +1,41 @@
+name: MBR clean rebuild
+on:
+  push:
+    branches: [main, 'mbr/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build-host -DCMAKE_BUILD_TYPE=Debug
+      - run: cmake --build build-host --parallel
+      - run: ctest --test-dir build-host --output-on-failure
+  pico2-w:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pinned toolchain and SDK
+        run: |
+          source ci/toolchain.env
+          sudo apt-get update
+          sudo apt-get install -y "gcc-arm-none-eabi=${ARM_GCC_PACKAGE_VERSION}" libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+          git clone --depth 1 --branch "$PICO_SDK_VERSION" https://github.com/raspberrypi/pico-sdk.git "$RUNNER_TEMP/pico-sdk"
+          test "$(git -C "$RUNNER_TEMP/pico-sdk" rev-parse HEAD)" = a1438dff1d38bd9c65dbd693f0e5db4b9ae91779
+          git -C "$RUNNER_TEMP/pico-sdk" submodule update --init --depth 1 lib/tinyusb
+      - name: Build both firmware targets
+        run: |
+          export PICO_SDK_PATH="$RUNNER_TEMP/pico-sdk"
+          cmake -S . -B build-pico -DMBR_BUILD_PICO=ON -DPICO_BOARD=pico2_w -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-pico --parallel
+          python3 tools/verify_uf2.py build-pico/*.uf2
+          sha256sum build-pico/*.uf2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mbr-04-pico2w-production-and-qualification
+          path: |
+            build-pico/*.uf2
+            build-pico/*.elf
+          if-no-files-found: error
