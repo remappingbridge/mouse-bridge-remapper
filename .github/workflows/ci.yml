@@ -1,0 +1,51 @@
+name: MBR verification
+on:
+  push:
+    branches: [main, 'mbr/**', 'experimental/**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Pinned BTstack headers and event utilities for radio contract tests
+        run: |
+          git init "$RUNNER_TEMP/btstack"
+          git -C "$RUNNER_TEMP/btstack" remote add origin https://github.com/bluekitchen/btstack.git
+          git -C "$RUNNER_TEMP/btstack" fetch --depth 1 origin 501e6d2b86e6c92bfb9c390bcf55709938e25ac1
+          git -C "$RUNNER_TEMP/btstack" checkout --detach FETCH_HEAD
+      - run: cmake -S . -B build-host -DCMAKE_BUILD_TYPE=Debug -DMBR_BTSTACK_ROOT="$RUNNER_TEMP/btstack"
+      - run: cmake --build build-host --parallel
+      - run: ctest --test-dir build-host --output-on-failure
+  pico2-w:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Pinned toolchain and SDK
+        run: |
+          source ci/toolchain.env
+          sudo apt-get update
+          sudo apt-get install -y "gcc-arm-none-eabi=${ARM_GCC_PACKAGE_VERSION}" libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib
+          git clone --depth 1 --branch "$PICO_SDK_VERSION" https://github.com/raspberrypi/pico-sdk.git "$RUNNER_TEMP/pico-sdk"
+          test "$(git -C "$RUNNER_TEMP/pico-sdk" rev-parse HEAD)" = a1438dff1d38bd9c65dbd693f0e5db4b9ae91779
+          git -C "$RUNNER_TEMP/pico-sdk" submodule update --init --depth 1 lib/tinyusb lib/btstack lib/cyw43-driver lib/lwip
+      - name: Build both firmware targets
+        run: |
+          export PICO_SDK_PATH="$RUNNER_TEMP/pico-sdk"
+          cmake -S . -B build-pico -DMBR_BUILD_PICO=ON -DPICO_BOARD=pico2_w -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-pico --parallel
+          python3 tools/verify_uf2.py build-pico/*.uf2
+          sha256sum build-pico/*.uf2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mbr-08-experimental-pico2w-production-and-qualification
+          path: |
+            build-pico/*.uf2
+            build-pico/*.elf
+          if-no-files-found: error

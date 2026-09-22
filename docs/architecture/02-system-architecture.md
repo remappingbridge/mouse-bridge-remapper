@@ -176,3 +176,26 @@ Automated checks reject:
 - transport: BLE HOGP Mouse only;
 - profile vocabulary: PASSTHROUGH, STANDARD, ESCAPE, CUSTOM;
 - USB identity/interface shape: as frozen in `01-product-contract.md`.
+
+## MBR-05 implemented wiring (clean rebuild)
+
+`bt_runtime` initializes CYW43/BTstack on core 0 and serializes commands and queue
+access using the SDK async-context lock. It composes the private `ble_hogp` adapter;
+HOGP publishes through an injected callback (no reverse module dependency).
+Callbacks never enter the application or TinyUSB. The 64-slot runtime ring has
+63 usable entries and a fail-closed overflow latch. Application `bridge` consumes
+it, validates transport/search generations, registers one live RAM session and
+forwards canonical passthrough input through `output_state` to `usb_hid`.
+
+The held owner table has five physical sources and six target refcounts, scoped
+to one session. Motion saturates at ±32767 per axis. The USB queue preserves
+button edges and only coalesces equal-held-state tail motion behind the in-flight
+entry; endpoint acceptance controls subtraction. Disconnect/parser failure/queue
+loss, USB lifecycle changes and HAT overflow enqueue neutral and invalidate the
+session. UI lock does not enter this data path. Initial display flush completes
+before radio initialization; later display flushes are bounded to two rows.
+
+Production MBR-05 has real BLE passthrough. Qualification stays a separate radio-
+free executable. Profiles/HID++, product flash, replacement handoff and removal
+are still later gates; their unimplemented effects are never acknowledged as
+successful. See `docs/implementation/06-mbr05-ble-passthrough.md`.

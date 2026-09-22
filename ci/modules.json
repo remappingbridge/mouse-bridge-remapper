@@ -1,0 +1,67 @@
+{
+  "domain": [],
+  "mouse_session": [
+    "domain"
+  ],
+  "mouse_registry": [
+    "domain"
+  ],
+  "pairing_coordinator": [
+    "domain"
+  ],
+  "output_state": [
+    "domain"
+  ],
+  "profiles": [
+    "domain"
+  ],
+  "remap": [
+    "profiles",
+    "output_state"
+  ],
+  "product_storage": [
+    "domain",
+    "mouse_registry"
+  ],
+  "logitech_hidpp": [
+    "domain"
+  ],
+  "ble_hogp": [
+    "domain",
+    "logitech_hidpp"
+  ],
+  "bt_runtime": [
+    "domain",
+    "ble_hogp"
+  ],
+  "interaction": [
+    "domain"
+  ],
+  "ui_projector": [
+    "domain"
+  ],
+  "renderer": [
+    "domain",
+    "ui_projector"
+  ],
+  "hat": [
+    "domain"
+  ],
+  "usb_hid": [
+    "output_state"
+  ],
+  "application": [
+    "interaction",
+    "ui_projector",
+    "mouse_session",
+    "mouse_registry",
+    "pairing_coordinator",
+    "renderer",
+    "hat",
+    "usb_hid",
+    "bt_runtime",
+    "output_state",
+    "product_storage",
+    "remap"
+  ]
+}

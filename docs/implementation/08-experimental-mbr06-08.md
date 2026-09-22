@@ -1,0 +1,28 @@
+# Isolated integrated recovery: MBR-06 through MBR-08
+
+Branch: `experimental/mbr08-integrated-recovery-20260920`.
+Base: MBR-05 `7f294a7fac9eebe226ad66c6b572582c5e483421`.
+
+The user reports mice not connecting and incorrect layout flow, and explicitly authorizes completing MBR-06/07/08 together, without intermediate physical gate dependencies. All changes stay on this exclusive branch; no merge into main or other implementation branches is authorized by this work. Physical PASS is not inferred from automated tests.
+
+Pre-implementation findings: MBR-05 rejects all production profile/removal requests; registry and known peer identities are RAM-only; its single transport cannot qualify a replacement while a Mouse is live. The report-map classifier rejects non-Mouse ancillary application collections. Discovery requires a HID UUID in one advertisement, and restarting FIRST every 8 seconds cancels in-flight qualification. USB mount/suspend events unnecessarily disconnect Bluetooth. Each is addressed with focused tests where reproducible without hardware.
+
+Plan: durable versioned dual-slot product state with pending-removal recovery separate from SDK BT credentials; real profile/draft/apply and held-source mapping; G06 HID++ Forward adaptation; at most one authoritative transport plus one non-authoritative replacement; bounded saved/new discovery; confirmed release/disconnect/persist/promote handoff; real UI requests and async state projection, preserving current screen literals, HOME name suffix, gray options/hints and full didactic background.
+
+Reference inspected: accepted `blu2usb@7eee024ad4ee726c5a85ffa2f32b9f47187878af`, BLE runtime/HOGP, HID++ core and adapter, flash storage adapter, canonical HID source order, renderer provenance already in THIRD_PARTY.md. Generic ancillary consumer/vendor reports do not grant any Bluetooth Keyboard or Composite product support.
+
+Verification: host contract/regression and integration/fault tests, transport adapter tests against a fake event-driven BTstack API, Pico SDK 2.2.0 target compilation, UF2 structure/hash verification, and numbered manual scenarios. Preserve old saved records through replacement; never acknowledge unsuccessful persistence. Reverting means selecting the previous branch/UF2, with the new product schema clearly documented.
+
+## Implementation and local evidence — 2026-09-20
+
+- MBR-06: exact fixed profiles and per-source held/refcount output; correct USB Backward bit 3 / Forward bit 4; global applied Custom and separate persistent dirty draft; versioned CRC32 dual-slot flash storage with verified writeback and unchanged-write elision; per-Mouse profile/identity; G06 HID++ 1B04/0056 diversion, held state, bounded response timeout and generic fallback.
+- MBR-07: two radio slots with exactly one authoritative session; split advertisement/scan-response cache and Mouse appearance; normalized identity address matching; preserved FIRST qualification across 8-second cycles; saved/new filtering; 12-second per-stage transport watchdog within UI search policy; old Mouse remains usable during discovery, then release/disconnect/persist/promote; persistent 16-Mouse registry; recoverable tombstone/credential cleanup; full registry rejects replacements before disturbing old Mouse.
+- MBR-08: real profile/draft/removal requests bound to durable storage and runtime; current-page preservation on reconnect; Help selection and ownership; Help return does not reset a running saved-search deadline; USB mount/resume releases output without tearing down BLE; radio initialization retry; existing literal screen/layout contract retained.
+- Host GCC 13.3.0, Debug, assertions and `-Wall -Wextra -Werror`: **14/14 PASS**, including actual radio adapter compiled against pinned BTstack headers/event getters/ad parser with simulated controller/GATT/security calls. Tests exercise split advertisements, FIRST renewal, saved public/identity address aliases, single authority, late cancellation, descriptor rejection, credential deletion, storage interruption/corruption/tombstone recovery, real app/bridge handoff/profile/removal, refcounts, parser, USB, all canonical screens and architecture guards.
+- Inspected the rendered 30-screen matrix. Geometry and hint RGB565 `0xC618` remain asserted by renderer tests; actual LCD appearance awaits operator checks.
+- Pico SDK **2.2.0**, SHA `a1438dff1d38bd9c65dbd693f0e5db4b9ae91779`; BTstack `501e6d2b86e6c92bfb9c390bcf55709938e25ac1`; ARM GCC **13.2.1**; CMake 3.28.3; `pico2_w`, Release; production and isolated qualification executables both build successfully.
+- Production UF2: **880640 bytes**, SHA-256 **c9ded48b8c4e61459829eaa8cb2db777d8a2bd246ea57055aeedcde25846427e**. Verified UF2 family `RP2350_ARM_S`, block ordering and address ranges. This is the user-facing firmware.
+- Qualification UF2: 96256 bytes, SHA-256 `97836b2e2db8670ff8b6ef3759afa37e9a97fb86d1656436f52d24a331e8b2ba`; fixtures only, not supplied as the real radio firmware.
+- Product sectors precede the SDK Bluetooth banks and RP2350-E10 reserved tail. Product and credential storage are separate. Old MBR-05 product registry was RAM-only; preserved BT bonds can be rediscovered but do not imply old product records exist. The new schema does not migrate blu2usb flash.
+
+The user's bypass authorizes this combined implementation and artifact delivery; it is **not** physical PASS evidence. Connection failure hypotheses were reproduced at adapter/model boundaries, not observed on the user's hardware. Manual coverage: [37 numbered scenarios](08-manual-tests.md). MBR-09/10 remain outside this delivery. Code rollback uses the previous branch/UF2; hardware credential changes are not reverted by changing Git branches.
